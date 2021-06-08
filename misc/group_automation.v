@@ -28,8 +28,9 @@ Fixpoint gexp_denote (env : list A) (e : gexp) : A := match e with
   | Inverse a => - (gexp_denote env a)
   end.
 
-Fixpoint gexp_list_denote (env : list A) (e : list gexp) : A := match e with
+Function gexp_list_denote (env : list A) (e : list gexp) : A := match e with
   | []    => mon_unit
+  | x::[] => gexp_denote env x
   | e::es => gexp_denote env e & gexp_list_denote env es
   end.
 
@@ -55,9 +56,24 @@ all: intros; simpl; lia.
 Defined.
 
 Lemma denote_append : ∀ env a b, gexp_list_denote env (a ++ b) = (gexp_list_denote env a) & (gexp_list_denote env b).
-Proof. induction a.
-  intros. simpl. rewrite left_identity. reflexivity.
-  intros. simpl. rewrite <- associativity. apply sg_op_proper. reflexivity. apply IHa. Qed.
+Proof. intros. functional induction (gexp_list_denote env) a.
+  simpl. rewrite left_identity. reflexivity.
+  simpl. destruct b.
+    simpl. rewrite right_identity. reflexivity.
+    reflexivity.
+  rewrite <- associativity. rewrite <- IHa0.
+    destruct es. contradiction.
+    simpl. reflexivity.
+Qed.
+
+Lemma denote_cons : ∀ env a b, gexp_list_denote env (a :: b) = gexp_denote env a & gexp_list_denote env b.
+Proof. intros. functional induction (gexp_list_denote env) b.
+  rewrite right_identity. reflexivity.
+  reflexivity.
+  destruct es.
+    contradiction.
+    simpl. reflexivity.
+Qed.
 
 Theorem flatten_correct: ∀ (env : list A) (e : gexp),
   gexp_denote env e = gexp_list_denote env (flatten e).
@@ -66,13 +82,14 @@ Proof. intros env e; functional induction (flatten e); simpl.
   rewrite denote_append. rewrite <- IHl. rewrite <- IHl0. simpl. apply negate_sg_op_distr_flip.
   apply negate_mon_unit.
   rewrite IHl. apply involutive.
-  rewrite right_identity. reflexivity.
   reflexivity.
-  rewrite right_identity. reflexivity.
+  reflexivity.
+  reflexivity.
 Qed.
 
 Function cancel (es : list gexp) {measure length} := 
-match es with Atomic n :: Inverse (Atomic m) :: es' => if decide (n = m) then cancel es' else Atomic n :: cancel (Inverse (Atomic m) :: es')
+match es with
+  | Atomic n :: Inverse (Atomic m) :: es' => if decide (n = m) then cancel es' else Atomic n :: cancel (Inverse (Atomic m) :: es')
   | Inverse (Atomic n) :: Atomic m :: es' => if decide (n = m) then cancel es' else Inverse (Atomic n) :: cancel (Atomic m :: es')
   | x :: es' => x :: cancel es'
   | [] => []
@@ -82,18 +99,20 @@ Defined.
 
 Lemma cancel_correct: ∀ env es, gexp_list_denote env es = gexp_list_denote env (cancel es).
 Proof. intros env es. functional induction cancel es.
-  simpl. rewrite associativity. rewrite _x. rewrite right_inverse. rewrite left_identity. apply IHl.
-  simpl. rewrite <- IHl. simpl. reflexivity.
-  simpl. rewrite associativity. rewrite _x. rewrite left_inverse. rewrite left_identity. apply IHl.
-  simpl. rewrite IHl. reflexivity.
-  simpl. rewrite IHl. reflexivity.
+  rewrite _x. rewrite <- IHl. simpl. destruct es'.
+    simpl. rewrite right_inverse. reflexivity.
+    rewrite associativity. rewrite right_inverse. rewrite left_identity. reflexivity.
+  rewrite denote_cons. rewrite denote_cons. rewrite denote_cons. rewrite <- IHl. rewrite denote_cons. reflexivity.
+  repeat rewrite denote_cons. simpl. rewrite associativity. rewrite _x. rewrite left_inverse. rewrite left_identity. assumption.
+  repeat rewrite denote_cons. rewrite <- IHl. rewrite denote_cons. reflexivity.
+  repeat rewrite denote_cons. rewrite <- IHl. reflexivity.
   reflexivity.
 Qed.
 
 Theorem group_reflect : ∀ env e1 e2,
-  gexp_list_denote env (flatten e1) = gexp_list_denote env (flatten e2)
+  gexp_list_denote env (cancel (flatten e1)) = gexp_list_denote env (cancel (flatten e2))
   -> gexp_denote env e1 = gexp_denote env e2.
-Proof. intros. rewrite flatten_correct. rewrite flatten_correct. assumption.
+Proof. intros. repeat rewrite flatten_correct. rewrite cancel_correct. rewrite (cancel_correct env (flatten e2)). assumption.
 Qed.
 
 Ltac inList x xs := match xs with
@@ -127,7 +146,6 @@ Ltac allVars xs e := match e with
 end.
 
 Ltac reifyTerm xs e :=
-let _ := match goal with | _ => idtac "reifyTerm" e end in
 match e with
   | (?x = ?y) => let a := reifyTerm xs x in
                  let b := reifyTerm xs y in
@@ -142,7 +160,7 @@ match e with
                  constr:(Atomic n)
   end.
 
-Ltac reify := match goal with
+Ltac group := match goal with
   | [ |- ?ge1 = ?ge2 ] => let vars := allVars (nil : list A) ge1 in
                           let vars := allVars vars ge2 in
                           let e1   := reifyTerm vars ge1 in
@@ -151,5 +169,19 @@ Ltac reify := match goal with
                           apply group_reflect; simpl
 end.
 
-Lemma foo : ∀ x y z, x & -y & -(z & y) = x & -z.
-Proof. intros. reify. 
+(* TODO: this should fail if there's no terms to simplify, partly so that it can
+go on to the next term to simplify.
+*)
+Ltac group_simplify := repeat progress match goal with
+  | [ |- context [?ge1 & ?ge2] ] => let ge := constr:(ge1 & ge2) in
+                         let vars := allVars (nil:list A) ge in
+                         let e := reifyTerm vars ge in
+                         setoid_replace ge with (gexp_list_denote vars (cancel (flatten e)))
+                         by (rewrite <- cancel_correct; rewrite <- flatten_correct; simpl; reflexivity);
+                         simpl
+end.
+
+Lemma foo : ∀ x y z w, x & w & y & -(z & y) = x & (y & -y) & w & -z .
+Proof. intros; group. reflexivity. Qed.
+
+
