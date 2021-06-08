@@ -88,6 +88,19 @@ Program Instance or_dec `(P_dec : Decision P) `(Q_dec : Decision Q) : Decision (
   end.
 Solve Obligations with (program_simpl; firstorder).
 
+Program Instance implies_dec `(P_dec : Decision P) `(Q_dec : Decision Q) : Decision (P → Q) :=
+  match P_dec, Q_dec with
+  | left _, left _ => left _
+  | left _, right _ => right _
+  | right _, _ => left _
+
+  end.
+Solve Obligations with contradiction.
+
+Instance iff_dec `(P_dec : Decision P) `(Q_dec : Decision Q) : Decision (P <-> Q).
+unfold iff. apply _.
+Qed.
+
 Program Instance is_Some_dec `(x : option A) : Decision (is_Some x) :=
   match x with
   | None => right _
