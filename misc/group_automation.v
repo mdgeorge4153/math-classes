@@ -31,7 +31,7 @@ Fixpoint gexp_denote (env : list A) (e : gexp) : A := match e with
 Function gexp_list_denote (env : list A) (e : list gexp) : A := match e with
   | []    => mon_unit
   | x::[] => gexp_denote env x
-  | e::es => gexp_denote env e & gexp_list_denote env es
+  | e::es => gexp_list_denote env es & gexp_denote env e
   end.
 
 Fixpoint gexp_height a : nat := match a with
@@ -44,8 +44,8 @@ Fixpoint gexp_height a : nat := match a with
 (* flatten produces a list that only contains Atomics and Inverse Atomics *)
 Function flatten (e : gexp) {measure gexp_height} : list gexp :=
   match e with
-  | GroupOp a b           => flatten a ++ flatten b
-  | Inverse (GroupOp a b) => flatten (Inverse b) ++ flatten (Inverse a)
+  | GroupOp a b           => flatten b ++ flatten a
+  | Inverse (GroupOp a b) => flatten (Inverse a) ++ flatten (Inverse b)
   | Inverse Identity      => []
   | Inverse (Inverse a)   => flatten a
   | Inverse (Atomic a)    => [Inverse (Atomic a)]
@@ -55,21 +55,22 @@ end.
 all: intros; simpl; lia.
 Defined.
 
-Lemma denote_append : ∀ env a b, gexp_list_denote env (a ++ b) = (gexp_list_denote env a) & (gexp_list_denote env b).
+Lemma denote_append : ∀ env a b,
+  gexp_list_denote env (a ++ b) = (gexp_list_denote env b) & (gexp_list_denote env a).
 Proof. intros. functional induction (gexp_list_denote env) a.
-  simpl. rewrite left_identity. reflexivity.
+  simpl. rewrite right_identity. reflexivity.
   simpl. destruct b.
-    simpl. rewrite right_identity. reflexivity.
+    simpl. rewrite left_identity. reflexivity.
     reflexivity.
-  rewrite <- associativity. rewrite <- IHa0.
+  rewrite <- app_comm_cons.
     destruct es. contradiction.
-    simpl. reflexivity.
+    rewrite associativity. rewrite <- IHa0. simpl. reflexivity.
 Qed.
 
-Lemma denote_cons : ∀ env a b, gexp_list_denote env (a :: b) = gexp_denote env a & gexp_list_denote env b.
+Lemma denote_cons : ∀ env a b, gexp_list_denote env (a :: b) = gexp_list_denote env b & gexp_denote env a.
 Proof. intros. functional induction (gexp_list_denote env) b.
-  rewrite right_identity. reflexivity.
-  reflexivity.
+  rewrite left_identity. reflexivity.
+  simpl. reflexivity.
   destruct es.
     contradiction.
     simpl. reflexivity.
@@ -100,10 +101,10 @@ Defined.
 Lemma cancel_correct: ∀ env es, gexp_list_denote env es = gexp_list_denote env (cancel es).
 Proof. intros env es. functional induction cancel es.
   rewrite _x. rewrite <- IHl. simpl. destruct es'.
-    simpl. rewrite right_inverse. reflexivity.
-    rewrite associativity. rewrite right_inverse. rewrite left_identity. reflexivity.
+    simpl. rewrite left_inverse. reflexivity.
+    rewrite <- associativity. rewrite left_inverse. rewrite right_identity. reflexivity.
   rewrite denote_cons. rewrite denote_cons. rewrite denote_cons. rewrite <- IHl. rewrite denote_cons. reflexivity.
-  repeat rewrite denote_cons. simpl. rewrite associativity. rewrite _x. rewrite left_inverse. rewrite left_identity. assumption.
+  repeat rewrite denote_cons. simpl. rewrite <- associativity. rewrite _x. rewrite right_inverse. rewrite right_identity. assumption.
   repeat rewrite denote_cons. rewrite <- IHl. rewrite denote_cons. reflexivity.
   repeat rewrite denote_cons. rewrite <- IHl. reflexivity.
   reflexivity.
@@ -181,7 +182,7 @@ Ltac group_simplify := repeat progress match goal with
                          simpl
 end.
 
-Lemma foo : ∀ x y z w, x & w & y & -(z & y) = x & (y & -y) & w & -z .
+Lemma group_test : ∀ x y z w, x & w & y & -(z & y) = x & (y & -y) & w & -z .
 Proof. intros; group. reflexivity. Qed.
 
 
