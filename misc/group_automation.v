@@ -1,5 +1,6 @@
 Require Import
   Coq.Classes.Morphisms
+  Coq.Sorting.Mergesort Coq.Sorting.Permutation Coq.Structures.Orders 
   FunInd Recdef
   Coq.Lists.List
   MathClasses.interfaces.abstract_algebra
@@ -9,8 +10,6 @@ Require Import
   Psatz.
 
 Import ListNotations.
-
-Section GroupAutomation.
 
 Context `{Group A}.
 
@@ -113,7 +112,10 @@ Qed.
 Theorem group_reflect : ∀ env e1 e2,
   gexp_list_denote env (cancel (flatten e1)) = gexp_list_denote env (cancel (flatten e2))
   -> gexp_denote env e1 = gexp_denote env e2.
-Proof. intros. repeat rewrite flatten_correct. rewrite cancel_correct. rewrite (cancel_correct env (flatten e2)). assumption.
+Proof. intros;
+  (rewrite_strat subterms flatten_correct);
+  (rewrite_strat subterms cancel_correct);
+  assumption.
 Qed.
 
 Ltac inList x xs := match xs with
@@ -184,5 +186,64 @@ end.
 
 Lemma group_test : ∀ x y z w, x & w & y & -(z & y) = x & (y & -y) & w & -z .
 Proof. intros; group. reflexivity. Qed.
+
+
+Module TermOrder <: TotalLeBool.
+  Definition t := gexp.
+  Fixpoint index x := match x with
+    | GroupOp _ _ => 0
+    | Identity    => 0
+    | Inverse x   => index x
+    | Atomic n    => n
+    end.
+
+  Definition leb x y := if decide(index x ≤ index y) then true else false.
+
+  Infix "<=?" := leb (at level 70, no associativity).
+
+  Theorem leb_total : ∀ a1 a2, (eq (a1 <=? a2) true) \/ (eq (a2 <=? a1) true).
+  Proof. unfold leb. intros a1 a2.
+    destruct (total (≤) (index a1) (index a2));
+      destruct (decide (index a1 ≤ index a2));
+      destruct (decide (index a2 ≤ index a1));
+      firstorder. Qed.
+End TermOrder.
+
+Module TermSort := Sort TermOrder.
+
+Lemma denote_permutation `{!AbGroup A}: ∀ env l m, Permutation l m ->
+  gexp_list_denote env l = gexp_list_denote env m.
+Proof. intros env l m p. induction p.
+  reflexivity.
+  repeat rewrite denote_cons. rewrite IHp. reflexivity.
+  repeat rewrite denote_cons. repeat rewrite <- associativity. apply sg_op_proper. reflexivity. apply commutativity.
+  auto.
+  Qed.
+
+Lemma sort_correct `{!AbGroup A}: ∀ env es,
+  gexp_list_denote env es = gexp_list_denote env (TermSort.sort es).
+Proof. intros. apply denote_permutation. apply TermSort.Permuted_sort. Qed.
+
+Theorem abgroup_reflect `{!AbGroup A}: ∀ env e1 e2,
+  gexp_list_denote env (cancel (TermSort.sort (flatten e1))) = gexp_list_denote env (cancel (TermSort.sort (flatten e2)))
+  -> gexp_denote env e1 = gexp_denote env e2.
+Proof. intros.
+  rewrite_strat subterms flatten_correct;
+                subterms sort_correct;
+                subterms cancel_correct.
+  assumption.
+  Qed.
+
+Ltac abgroup := match goal with
+  | [ |- ?ge1 = ?ge2 ] => let vars := allVars (nil : list A) ge1 in
+                          let vars := allVars vars ge2 in
+                          let e1   := reifyTerm vars ge1 in
+                          let e2   := reifyTerm vars ge2 in
+                          change (gexp_denote vars e1 = gexp_denote vars e2);
+                          apply abgroup_reflect; simpl
+end.
+
+Lemma abgroup_test `{!AbGroup A}: ∀ x y z w, x & y & -x & -y & -(z & w) = -w & -w & -z & w.
+Proof. intros; abgroup; reflexivity. Qed.
 
 
