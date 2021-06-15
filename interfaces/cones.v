@@ -4,7 +4,8 @@ cones.
 *)
 
 Require Import
-  MathClasses.interfaces.abstract_algebra.
+  MathClasses.interfaces.abstract_algebra
+  MathClasses.theory.groups.
 
 
 (** Operational typeclasses ***************************************************)
@@ -102,31 +103,15 @@ Definition cone_relation (cone_contains : A -> Prop) : relation A :=
 Definition relation_cone (compare : relation A) : A -> Prop :=
   λ x, compare mon_unit x.
 
-Context `{!Group A}.
+Context `{!SemiGroupCone cone_contains}.
 
-Hint Rewrite left_identity right_identity left_inverse right_inverse : cancellation.
+Infix "~" := (cone_relation cone_contains) (at level 70, no associativity).
 
-Ltac group_simplify := rewrite_strat
-  try bottomup associativity;
-  bottomup (choice (hints cancellation) <- associativity).
+Lemma cone_rel_compat_left : ∀ x y z, x ~ y -> z & x ~ z & y.
+Proof. (* intros. unfold cone_relation in *.
+  apply sgcone_flip.
+  apply (sgcone_proper (-x & y) (- (z & x) & (z & y))).  group. *)
+  admit.  Admitted.
 
-Ltac group := group_simplify; firstorder.
-
-Lemma negate_sg_op_distr_flip: ∀ a b, -(a & b) = -b & -a.
-Proof.
-intros;
-  setoid_replace (-b & -a) with (-(a & b) & (a & b) & (-b & -a)) by group;
-  rewrite <- associativity;
-  setoid_replace (a & b & (-b & -a)) with mon_unit by group;
-group.
-Qed.
-
-Ltac group_simplify ::= rewrite_strat
-  try topdown negate_sg_op_distr_flip;
-  try bottomup associativity;
-  bottomup (choice (hints cancellation) <- associativity).
-
-Lemma cone_relation_sgop_left `{SemiGroupCone cone}: 
-
-End theory.
+End ConeOrders.
 
