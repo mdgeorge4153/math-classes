@@ -11,6 +11,8 @@ Require Import
 
 Import ListNotations.
 
+Section GroupAutomation.
+
 Context `{Group A}.
 
 Inductive gexp : Type :=
@@ -87,26 +89,26 @@ Proof. intros env e; functional induction (flatten e); simpl.
   reflexivity.
 Qed.
 
-Function cancel (es : list gexp) {measure length} := 
+Function cancel (es : list gexp) {struct es} :=
 match es with
-  | Atomic n :: Inverse (Atomic m) :: es' => if decide (n = m) then cancel es' else Atomic n :: cancel (Inverse (Atomic m) :: es')
-  | Inverse (Atomic n) :: Atomic m :: es' => if decide (n = m) then cancel es' else Inverse (Atomic n) :: cancel (Atomic m :: es')
-  | x :: es' => x :: cancel es'
   | [] => []
+  | e :: es' => let ces' := cancel es' in
+                match e, ces' with
+                  | Atomic n, Inverse (Atomic m) :: ces''
+                  | Inverse (Atomic n), Atomic m :: ces'' =>
+                      if decide (n = m) then ces'' else e::ces'
+                  | _, _ => e :: ces'
+                end
 end.
-all: simpl; intros; repeat constructor.
-Defined.
 
 Lemma cancel_correct: ∀ env es, gexp_list_denote env es = gexp_list_denote env (cancel es).
 Proof. intros env es. functional induction cancel es.
-  rewrite _x. rewrite <- IHl. simpl. destruct es'.
-    simpl. rewrite left_inverse. reflexivity.
-    rewrite <- associativity. rewrite left_inverse. rewrite right_identity. reflexivity.
-  rewrite denote_cons. rewrite denote_cons. rewrite denote_cons. rewrite <- IHl. rewrite denote_cons. reflexivity.
-  repeat rewrite denote_cons. simpl. rewrite <- associativity. rewrite _x. rewrite right_inverse. rewrite right_identity. assumption.
-  repeat rewrite denote_cons. rewrite <- IHl. rewrite denote_cons. reflexivity.
-  repeat rewrite denote_cons. rewrite <- IHl. reflexivity.
   reflexivity.
+  rewrite denote_cons; rewrite IHl; rewrite e2; rewrite denote_cons; simpl; rewrite _x; group.
+  repeat rewrite denote_cons; rewrite IHl; reflexivity.
+  rewrite denote_cons; rewrite IHl; rewrite e2; rewrite denote_cons; simpl; rewrite _x; group.
+  repeat rewrite denote_cons; rewrite IHl; reflexivity.
+  repeat rewrite denote_cons. rewrite IHl. reflexivity.
 Qed.
 
 Theorem group_reflect : ∀ env e1 e2,
@@ -117,6 +119,25 @@ Proof. intros;
   (rewrite_strat subterms cancel_correct);
   assumption.
 Qed.
+
+Lemma move_to_left : ∀ a b, a & -b = mon_unit -> a = b.
+Proof. intros. setoid_replace b with (a & -b & b).
+  rewrite <- associativity. rewrite left_inverse. rewrite right_identity. reflexivity.
+  rewrite H0. rewrite left_identity. reflexivity.
+Qed.
+
+
+Theorem group_reflect_flip : ∀ env e1 e2,
+  gexp_list_denote env (cancel (flatten (GroupOp e1 (Inverse e2)))) = mon_unit
+  -> gexp_denote env e1 = gexp_denote env e2.
+Proof. intros. apply move_to_left.
+replace (gexp_denote env e1 & - gexp_denote env e2)
+   with (gexp_denote env (GroupOp e1 (Inverse e2))).
+    rewrite flatten_correct. rewrite cancel_correct. assumption.
+    simpl. reflexivity.
+Qed.
+
+End GroupAutomation.
 
 Ltac inList x xs := match xs with
   | []      => false
@@ -164,29 +185,34 @@ match e with
   end.
 
 Ltac group := match goal with
-  | [ |- ?ge1 = ?ge2 ] => let vars := allVars (nil : list A) ge1 in
+  | [ |- ?ge1 = ?ge2 ] => let t    := type of ge1 in
+                          let vars := allVars (nil : list t) ge1 in
                           let vars := allVars vars ge2 in
                           let e1   := reifyTerm vars ge1 in
                           let e2   := reifyTerm vars ge2 in
                           change (gexp_denote vars e1 = gexp_denote vars e2);
-                          apply group_reflect; simpl
-end.
+                          apply group_reflect_flip; simpl
+end; try easy.
 
 (* TODO: this should fail if there's no terms to simplify, partly so that it can
 go on to the next term to simplify.
 *)
 Ltac group_simplify := repeat progress match goal with
-  | [ |- context [?ge1 & ?ge2] ] => let ge := constr:(ge1 & ge2) in
-                         let vars := allVars (nil:list A) ge in
+  | [ |- context [?ge1 & ?ge2] ] =>
+                         let ge := constr:(ge1 & ge2) in
+                         let t  := type of ge in
+                         let vars := allVars (nil : list t) ge in
                          let e := reifyTerm vars ge in
                          setoid_replace ge with (gexp_list_denote vars (cancel (flatten e)))
                          by (rewrite <- cancel_correct; rewrite <- flatten_correct; simpl; reflexivity);
                          simpl
 end.
 
-Lemma group_test : ∀ x y z w, x & w & y & -(z & y) = x & (y & -y) & w & -z .
-Proof. intros; group. reflexivity. Qed.
+Lemma group_test `{Group A} : ∀ x y z w, x & w & y & -(z & y) = x & (y & -y) & w & -z .
+Proof. intros. group. Qed.
 
+Lemma group_test2 `{Group A}: ∀ x y z, -x & y = - (z & x) & (z & y).
+Proof. intros; group. Qed.
 
 Module TermOrder <: TotalLeBool.
   Definition t := gexp.
@@ -211,7 +237,7 @@ End TermOrder.
 
 Module TermSort := Sort TermOrder.
 
-Lemma denote_permutation `{!AbGroup A}: ∀ env l m, Permutation l m ->
+Lemma denote_permutation `{AbGroup A}: ∀ env l m, Permutation l m ->
   gexp_list_denote env l = gexp_list_denote env m.
 Proof. intros env l m p. induction p.
   reflexivity.
@@ -220,11 +246,11 @@ Proof. intros env l m p. induction p.
   auto.
   Qed.
 
-Lemma sort_correct `{!AbGroup A}: ∀ env es,
+Lemma sort_correct `{AbGroup A}: ∀ env es,
   gexp_list_denote env es = gexp_list_denote env (TermSort.sort es).
 Proof. intros. apply denote_permutation. apply TermSort.Permuted_sort. Qed.
 
-Theorem abgroup_reflect `{!AbGroup A}: ∀ env e1 e2,
+Theorem abgroup_reflect `{AbGroup A}: ∀ env e1 e2,
   gexp_list_denote env (cancel (TermSort.sort (flatten e1))) = gexp_list_denote env (cancel (TermSort.sort (flatten e2)))
   -> gexp_denote env e1 = gexp_denote env e2.
 Proof. intros.
@@ -235,15 +261,16 @@ Proof. intros.
   Qed.
 
 Ltac abgroup := match goal with
-  | [ |- ?ge1 = ?ge2 ] => let vars := allVars (nil : list A) ge1 in
+  | [ |- ?ge1 = ?ge2 ] => let t    := type of ge1 in
+                          let vars := allVars (nil : list t) ge1 in
                           let vars := allVars vars ge2 in
                           let e1   := reifyTerm vars ge1 in
                           let e2   := reifyTerm vars ge2 in
                           change (gexp_denote vars e1 = gexp_denote vars e2);
                           apply abgroup_reflect; simpl
-end.
+end; try easy.
 
-Lemma abgroup_test `{!AbGroup A}: ∀ x y z w, x & y & -x & -y & -(z & w) = -w & -w & -z & w.
+Lemma abgroup_test `{AbGroup A}: ∀ x y z w, x & y & -x & -y & -(z & w) = -w & -w & -z & w.
 Proof. intros; abgroup; reflexivity. Qed.
 
 
