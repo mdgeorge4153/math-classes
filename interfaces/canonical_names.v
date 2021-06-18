@@ -1,5 +1,4 @@
 Global Generalizable All Variables.
-Global Set Automatic Introduction.
 
 Require Import MathClasses.theory.CoqStreams.
 Require Export Coq.Classes.Morphisms Coq.Setoids.Setoid Coq.Program.Program Coq.Unicode.Utf8 Coq.Unicode.Utf8_core MathClasses.misc.stdlib_hints.
@@ -14,6 +13,7 @@ Typeclasses Transparent Equiv.
 Typeclasses Transparent compose flip.
 
 (* We use this virtually everywhere, and so use "=" for it: *)
+Export Set Warnings "-notation-overridden".
 Infix "=" := equiv : type_scope.
 Notation "(=)" := equiv (only parsing) : mc_scope.
 Notation "( x =)" := (equiv x) (only parsing) : mc_scope.
