@@ -152,3 +152,4 @@ Proof. split.
 
 End WeakOrder.
 
+End ConeOrders.
