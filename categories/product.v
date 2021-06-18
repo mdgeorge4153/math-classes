@@ -19,7 +19,7 @@ Section object.
 End object.
 
 (* Avoid Coq trying to apply e to find arbitrary Equiv instances *)
-Hint Extern 0 (Equiv (_ ⟶ _)) => eapply @e : typeclass_instances.
+Global Hint Extern 0 (Equiv (_ ⟶ _)) => eapply @e : typeclass_instances.
 
 Section contents.
   Context {I: Type} (O: I → Type)

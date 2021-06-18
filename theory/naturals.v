@@ -203,5 +203,5 @@ End with_a_ring.
 End contents.
 
 (* Due to bug #2528 *)
-Hint Extern 6 (PropHolds (1 ≠ 0)) => eapply @nat_nontrivial : typeclass_instances.
-Hint Extern 6 (PropHolds (1 ≶ 0)) => eapply @nat_nontrivial_apart : typeclass_instances.
+Global Hint Extern 6 (PropHolds (1 ≠ 0)) => eapply @nat_nontrivial : typeclass_instances.
+Global Hint Extern 6 (PropHolds (1 ≶ 0)) => eapply @nat_nontrivial_apart : typeclass_instances.

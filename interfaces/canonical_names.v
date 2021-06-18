@@ -3,6 +3,8 @@ Global Generalizable All Variables.
 Require Import MathClasses.theory.CoqStreams.
 Require Export Coq.Classes.Morphisms Coq.Setoids.Setoid Coq.Program.Program Coq.Unicode.Utf8 Coq.Unicode.Utf8_core MathClasses.misc.stdlib_hints.
 
+Declare Scope mc_scope.
+
 Definition id {A : Type} (a : A) := a.
 
 (* Equality *)
@@ -26,9 +28,9 @@ Notation "(≠ x )" := (λ y, y ≠ x) (only parsing) : mc_scope.
 Delimit Scope mc_scope with mc. 
 Global Open Scope mc_scope.
 
-Hint Extern 2 (?x = ?x) => reflexivity.
-Hint Extern 2 (?x = ?y) => auto_symm.
-Hint Extern 2 (?x = ?y) => auto_trans.
+Global Hint Extern 2 (?x = ?x) => reflexivity : core.
+Global Hint Extern 2 (?x = ?y) => auto_symm : core.
+Global Hint Extern 2 (?x = ?y) => auto_trans : core.
 
 (* Coq sometimes uses an incorrect DefaultRelation, so we override it. *)
 Instance equiv_default_relation `{Equiv A} : DefaultRelation (=) | 3 := {}.
@@ -71,8 +73,8 @@ Notation "(≢ x )" := (λ y, y ≢ x) (only parsing) : mc_scope.
 
 (* Some common notions of equality *)
 Definition ext_equiv `{Equiv A} `{Equiv B} : Equiv (A → B) := ((=) ==> (=))%signature.
-Hint Extern 10 (Equiv (_ → _)) => apply @ext_equiv : typeclass_instances.
-Hint Extern 10 (Equiv (relation _)) => apply @ext_equiv : typeclass_instances. (* Due to bug #2491 *)
+Global Hint Extern 10 (Equiv (_ → _)) => apply @ext_equiv : typeclass_instances.
+Global Hint Extern 10 (Equiv (relation _)) => apply @ext_equiv : typeclass_instances. (* Due to bug #2491 *)
 (** Interestingly, most of the development works fine if this is defined as
   ∀ x, f x = g x.
 However, in the end that version was just not strong enough for comfortable rewriting
@@ -84,14 +86,14 @@ Ltac simpl_sig_equiv :=
   match goal with 
   | |- (@equiv _ (@sig_equiv _ ?e _) (?x↾_) (?y↾_)) => change (@equiv _ e x y) 
   end.
-Hint Extern 10 (Equiv (sig _)) => apply @sig_equiv : typeclass_instances.
-Hint Extern 4 (@equiv _ (sig_equiv _ _ _) (_↾_) (_↾_)) => simpl_sig_equiv.
+Global Hint Extern 10 (Equiv (sig _)) => apply @sig_equiv : typeclass_instances.
+Global Hint Extern 4 (@equiv _ (sig_equiv _ _ _) (_↾_) (_↾_)) => simpl_sig_equiv : core.
 
 Definition sigT_equiv `{Equiv A} (P: A → Type) : Equiv (sigT P) := λ a b, projT1 a = projT1 b.
-Hint Extern 10 (Equiv (sigT _)) => apply @sigT_equiv : typeclass_instances.
+Global Hint Extern 10 (Equiv (sigT _)) => apply @sigT_equiv : typeclass_instances.
 
 Definition sig_apart `{Apart A} (P: A → Prop) : Apart (sig P) := λ x y, `x ≶ `y.
-Hint Extern 10 (Apart (sig _)) => apply @sig_apart : typeclass_instances.
+Global Hint Extern 10 (Apart (sig _)) => apply @sig_apart : typeclass_instances.
 
 Class Cast A B := cast: A → B.
 Arguments cast _ _ {Cast} _.
@@ -168,15 +170,15 @@ Instance top_is_mon_unit `{s : Top A} : MonUnit A := s.
 Instance bottom_is_mon_unit `{s : Bottom A} : MonUnit A := s.
 Instance singleton_is_cast `{s : Singleton A B} : Cast A B := s.
 
-Hint Extern 10 (Equiv (_ ⟶ _)) => apply @ext_equiv : typeclass_instances.
-Hint Extern 4 (Equiv (ApartZero _)) => apply @sig_equiv : typeclass_instances.
-Hint Extern 4 (Equiv (NonNeg _)) => apply @sig_equiv : typeclass_instances.
-Hint Extern 4 (Equiv (Pos _)) => apply @sig_equiv : typeclass_instances.
-Hint Extern 4 (Equiv (PosInf _)) => apply @sig_equiv : typeclass_instances.
-Hint Extern 4 (Apart (ApartZero _)) => apply @sig_apart : typeclass_instances.
-Hint Extern 4 (Apart (NonNeg _)) => apply @sig_apart : typeclass_instances.
-Hint Extern 4 (Apart (Pos _)) => apply @sig_apart : typeclass_instances.
-Hint Extern 4 (Apart (PosInf _)) => apply @sig_apart : typeclass_instances.
+Global Hint Extern 10 (Equiv (_ ⟶ _)) => apply @ext_equiv : typeclass_instances.
+Global Hint Extern 4 (Equiv (ApartZero _)) => apply @sig_equiv : typeclass_instances.
+Global Hint Extern 4 (Equiv (NonNeg _)) => apply @sig_equiv : typeclass_instances.
+Global Hint Extern 4 (Equiv (Pos _)) => apply @sig_equiv : typeclass_instances.
+Global Hint Extern 4 (Equiv (PosInf _)) => apply @sig_equiv : typeclass_instances.
+Global Hint Extern 4 (Apart (ApartZero _)) => apply @sig_apart : typeclass_instances.
+Global Hint Extern 4 (Apart (NonNeg _)) => apply @sig_apart : typeclass_instances.
+Global Hint Extern 4 (Apart (Pos _)) => apply @sig_apart : typeclass_instances.
+Global Hint Extern 4 (Apart (PosInf _)) => apply @sig_apart : typeclass_instances.
 
 (* Notations: *)
 Notation "R ₀" := (ApartZero R) (at level 20, no associativity) : mc_scope.
@@ -290,9 +292,9 @@ Notation "(:::)" := Cons (only parsing) : mc_scope.
 Notation "(::: X )" := (λ x, Cons x X) (only parsing) : mc_scope.
 Notation "( x :::)" := (Cons x) (only parsing) : mc_scope.
 
-Hint Extern 2 (?x ≤ ?y) => reflexivity.
-Hint Extern 4 (?x ≤ ?z) => auto_trans.
-Hint Extern 4 (?x < ?z) => auto_trans.
+Global Hint Extern 2 (?x ≤ ?y) => reflexivity : core.
+Global Hint Extern 4 (?x ≤ ?z) => auto_trans  : core.
+Global Hint Extern 4 (?x < ?z) => auto_trans  : core.
 
 Class Abs A `{Equiv A} `{Le A} `{Zero A} `{Negate A} := abs_sig: ∀ (x : A), { y : A | (0 ≤ x → y = x) ∧ (x ≤ 0 → y = -x)}.
 Definition abs `{Abs A} := λ x : A, ` (abs_sig x).
@@ -332,7 +334,7 @@ Class HeteroAssociative {A B C AB BC} `{Equiv ABC}
      (fA_BC: A → BC → ABC) (fBC: B → C → BC) (fAB_C: AB → C → ABC) (fAB : A → B → AB): Prop
    := associativity : ∀ x y z, fA_BC x (fBC y z) = fAB_C (fAB x y) z.
 Class Associative `{Equiv A} f := simple_associativity:> HeteroAssociative f f f f.
-Notation ArrowsAssociative C := (∀ {w x y z: C}, HeteroAssociative (◎) (comp z _ _ ) (◎) (comp y x w)).
+Notation ArrowsAssociative C := (∀ (w x y z: C), HeteroAssociative (◎) (comp z _ _ ) (◎) (comp y x w)).
 
 Class Involutive `{Equiv A} (f : A → A) := involutive: ∀ x, f (f x) = x.
 

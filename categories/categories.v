@@ -11,7 +11,7 @@ Record Object := object
 
 Arguments object _ {Arrows_inst Equiv_inst CatId_inst CatComp_inst Category_inst}.
 Existing Instance Arrows_inst.
-Hint Extern 0 (Equiv (_ ⟶ _)) => eapply @Equiv_inst : typeclass_instances.
+Global Hint Extern 0 (Equiv (_ ⟶ _)) => eapply @Equiv_inst : typeclass_instances.
 Existing Instance CatId_inst.
 Existing Instance CatComp_inst.
 Existing Instance Category_inst.

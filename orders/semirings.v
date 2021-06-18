@@ -145,7 +145,7 @@ Section semiring_order.
 End semiring_order.
 
 (* Due to bug #2528 *)
-Hint Extern 7 (PropHolds (0 ≤ _ + _)) => eapply @nonneg_plus_compat : typeclass_instances.
+Global Hint Extern 7 (PropHolds (0 ≤ _ + _)) => eapply @nonneg_plus_compat : typeclass_instances.
 
 Section strict_semiring_order.
   Context `{SemiRing R} `{Apart R} `{!StrictSemiRingOrder Rlt}.

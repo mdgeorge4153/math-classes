@@ -107,7 +107,7 @@ Section semiring_props.
 End semiring_props.
 
 (* Due to bug #2528 *)
-Hint Extern 3 (PropHolds (_ * _ ≠ 0)) => eapply @mult_ne_0 : typeclass_instances.
+Global Hint Extern 3 (PropHolds (_ * _ ≠ 0)) => eapply @mult_ne_0 : typeclass_instances.
 
 Section semiringmor_props.
   Context `{SemiRing_Morphism A B f}.
@@ -141,7 +141,7 @@ Section semiringmor_props.
 End semiringmor_props.
 
 (* Due to bug #2528 *)
-Hint Extern 12 (PropHolds (_ _ ≠ 0)) => eapply @injective_ne_0 : typeclass_instances.
+Global Hint Extern 12 (PropHolds (_ _ ≠ 0)) => eapply @injective_ne_0 : typeclass_instances.
 
 Lemma stdlib_ring_theory R `{Ring R} :
   Ring_theory.ring_theory 0 1 (+) (.*.) (λ x y, x - y) (-) (=).
@@ -245,7 +245,7 @@ Section integral_domain_props.
 End integral_domain_props.
 
 (* Due to bug #2528 *)
-Hint Extern 6 (PropHolds (1 ≶ 0)) => eapply @intdom_nontrivial_apart : typeclass_instances.
+Global Hint Extern 6 (PropHolds (1 ≶ 0)) => eapply @intdom_nontrivial_apart : typeclass_instances.
 
 Section ringmor_props.
   Context `{Ring A} `{Ring B} `{!SemiRing_Morphism (f : A → B)}.
@@ -337,8 +337,8 @@ Section morphism_composition.
   Proof. split; try apply _; firstorder. Qed.
 End morphism_composition.
 
-Hint Extern 4 (SemiRing_Morphism (_ ∘ _)) => class_apply @compose_sr_morphism : typeclass_instances.
-Hint Extern 4 (SemiRing_Morphism (_⁻¹)) => class_apply @invert_sr_morphism : typeclass_instances.
+Global Hint Extern 4 (SemiRing_Morphism (_ ∘ _)) => class_apply @compose_sr_morphism : typeclass_instances.
+Global Hint Extern 4 (SemiRing_Morphism (_⁻¹)) => class_apply @invert_sr_morphism : typeclass_instances.
 
 Instance semiring_morphism_proper {A B eA eB pA mA zA oA pB mB zB oB} :
   Proper ((=) ==> (=)) (@SemiRing_Morphism A B eA eB pA mA zA oA pB mB zB oB).

@@ -39,7 +39,7 @@ Qed.
 End contents.
 
 (* Due to bug #2528 *)
-Hint Extern 3 (PropHolds (_ ≠ _)) => eapply @apart_ne : typeclass_instances.
+Global Hint Extern 3 (PropHolds (_ ≠ _)) => eapply @apart_ne : typeclass_instances.
 
 Lemma projected_strong_setoid `{StrongSetoid B} `{Equiv A} `{Apart A} (f: A → B)
   (eq_correct : ∀ x y, x = y ↔ f x = f y) (apart_correct : ∀ x y, x ≶ y ↔ f x ≶ f y) : StrongSetoid A.

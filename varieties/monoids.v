@@ -149,5 +149,5 @@ Section specialized.
   Qed.
 End specialized.
 
-Hint Extern 4 (Monoid_Morphism (_ ∘ _)) => class_apply @compose_monoid_morphism : typeclass_instances.
-Hint Extern 4 (Monoid_Morphism (_⁻¹)) => class_apply @invert_monoid_morphism : typeclass_instances.
+Global Hint Extern 4 (Monoid_Morphism (_ ∘ _)) => class_apply @compose_monoid_morphism : typeclass_instances.
+Global Hint Extern 4 (Monoid_Morphism (_⁻¹)) => class_apply @invert_monoid_morphism : typeclass_instances.

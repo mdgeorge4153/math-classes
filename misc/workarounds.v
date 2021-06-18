@@ -2,7 +2,7 @@ Require Import MathClasses.interfaces.canonical_names.
 Require Import Coq.Classes.Equivalence Coq.Classes.Morphisms Coq.Classes.RelationClasses.
 
 (* Remove some duplicate / obsolete instances *)
-Remove Hints Equivalence_Reflexive
+Global Remove Hints Equivalence_Reflexive
   equiv_reflexive
   Equivalence_Symmetric
   equiv_symmetric
@@ -10,9 +10,9 @@ Remove Hints Equivalence_Reflexive
   equiv_transitive : typeclass_instances.
 
 (* And re-insert the required ones with a low cost *)
-Hint Extern 0 (Reflexive _) => apply @Equivalence_Reflexive : typeclass_instances.
-Hint Extern 0 (Symmetric _) => apply @Equivalence_Symmetric : typeclass_instances.
-Hint Extern 0 (Transitive _) => apply @Equivalence_Transitive : typeclass_instances.
+Global Hint Extern 0 (Reflexive _) => apply @Equivalence_Reflexive : typeclass_instances.
+Global Hint Extern 0 (Symmetric _) => apply @Equivalence_Symmetric : typeclass_instances.
+Global Hint Extern 0 (Transitive _) => apply @Equivalence_Transitive : typeclass_instances.
 
 (*
 (* We don't want Coq trying to prove e.g. transitivity of an arbitrary relation R

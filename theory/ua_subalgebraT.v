@@ -78,4 +78,4 @@ Section subalgebras.
   Proof. constructor. apply _. intro. apply close_op_proper, algebra_propers. Qed.
 End subalgebras.
 
-Hint Unfold carrier: typeclass_instances.
+Global Hint Unfold carrier: typeclass_instances.

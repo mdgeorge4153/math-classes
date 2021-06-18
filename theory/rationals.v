@@ -80,7 +80,7 @@ Qed.
 
 Definition rationals_to_rationals Q1 Q2 `{Rationals Q1} `{Rationals Q2} : Q1 → Q2
   := (rationals_to_frac Q2 (SRpair nat))⁻¹ ∘ rationals_to_frac Q1 (SRpair nat).
-Hint Unfold rationals_to_rationals : typeclass_instances.
+Global Hint Unfold rationals_to_rationals : typeclass_instances.
 
 Section another_rationals.
   Context `{Rationals Q1} `{Rationals Q2}.

@@ -34,7 +34,7 @@ End laws.
 Definition theory: EquationalTheory := Build_EquationalTheory sig Laws.
 Definition Object := varieties.Object theory.
 
-Hint Extern 4 => match goal with [ |- ∀ _:unit, _ ] => intros [] end : typeclass_instances.
+Global Hint Extern 4 => match goal with [ |- ∀ _:unit, _ ] => intros [] end : typeclass_instances.
 Program Definition forget: Object → setoids.Object :=
   product.project (λ _, setoids.Object) tt
      ∘ forget_algebra.object theory ∘ forget_variety.forget theory.

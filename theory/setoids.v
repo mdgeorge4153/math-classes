@@ -51,7 +51,7 @@ Proof. firstorder. Qed.
 Lemma compose_setoid_morphism `{Equiv A} `{Equiv B} `{Equiv C} (f : A → B) (g : B → C) :
   Setoid_Morphism f → Setoid_Morphism g → Setoid_Morphism (g ∘ f).
 Proof. firstorder. Qed.
-Hint Extern 4 (Setoid_Morphism (_ ∘ _)) => class_apply @compose_setoid_morphism : typeclass_instances.
+Global Hint Extern 4 (Setoid_Morphism (_ ∘ _)) => class_apply @compose_setoid_morphism : typeclass_instances.
 
 Instance morphism_proper `{Equiv A} `{Equiv B}: Proper ((=) ==> iff) (@Setoid_Morphism A B _ _).
 Proof.

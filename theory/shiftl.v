@@ -195,9 +195,9 @@ Qed.
 End shiftl.
 
 (* Due to bug #2528 *)
-Hint Extern 18 (PropHolds (_ ≪ _ ≠ 0)) => eapply @shiftl_ne_0 : typeclass_instances.
-Hint Extern 18 (PropHolds (0 ≤ _ ≪ _)) => eapply @shiftl_nonneg : typeclass_instances.
-Hint Extern 18 (PropHolds (0 < _ ≪ _)) => eapply @shiftl_pos : typeclass_instances.
+Global Hint Extern 18 (PropHolds (_ ≪ _ ≠ 0)) => eapply @shiftl_ne_0 : typeclass_instances.
+Global Hint Extern 18 (PropHolds (0 ≤ _ ≪ _)) => eapply @shiftl_nonneg : typeclass_instances.
+Global Hint Extern 18 (PropHolds (0 < _ ≪ _)) => eapply @shiftl_pos : typeclass_instances.
 
 Section preservation.
   Context `{SemiRing B} `{!Biinduction B}

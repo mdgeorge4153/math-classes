@@ -100,5 +100,5 @@ Qed.
 End contents.
 
 (* Due to bug #2528 *)
-Hint Extern 12 (PropHolds (0 ≤ _)) => eapply @nonneg_dec_recip_compat : typeclass_instances.
-Hint Extern 12 (PropHolds (0 < _)) => eapply @pos_dec_recip_compat : typeclass_instances.
+Global Hint Extern 12 (PropHolds (0 ≤ _)) => eapply @nonneg_dec_recip_compat : typeclass_instances.
+Global Hint Extern 12 (PropHolds (0 < _)) => eapply @pos_dec_recip_compat : typeclass_instances.

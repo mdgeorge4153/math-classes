@@ -154,7 +154,7 @@ Qed.
 End contents.
 
 (* Due to bug #2528 *)
-Hint Extern 7 (PropHolds (/ _ ≠ 0)) => eapply @dec_recip_ne_0 : typeclass_instances.
+Global Hint Extern 7 (PropHolds (/ _ ≠ 0)) => eapply @dec_recip_ne_0 : typeclass_instances.
 
 (* Given a decidable field we can easily construct a constructive field. *)
 Section is_field.

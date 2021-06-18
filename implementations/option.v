@@ -6,7 +6,7 @@ Inductive option_equiv A `{Equiv A} : Equiv (option A) :=
   | option_equiv_None : None = None.
 
 Existing Instance option_equiv.
-Hint Constructors option_equiv.
+Local Hint Constructors option_equiv : core.
 
 Section contents.
   Context `{Setoid A}.
@@ -79,7 +79,7 @@ Section contents.
   Next Obligation. setoid_discriminate. Qed.
 End contents.
 
-Hint Extern 10 (Equiv (option _)) => apply @option_equiv : typeclass_instances.
+Global Hint Extern 10 (Equiv (option _)) => apply @option_equiv : typeclass_instances.
 
 Lemma option_equiv_eq {A} (x y : option A) : 
   @option_equiv A (≡) x y ↔ x ≡ y.

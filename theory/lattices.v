@@ -153,11 +153,11 @@ Section morphism_composition.
   Proof. split; try apply _; firstorder. Qed.
 End morphism_composition.
 
-Hint Extern 4 (JoinSemiLattice_Morphism (_ ∘ _)) => class_apply @compose_join_sl_morphism : typeclass_instances.
-Hint Extern 4 (MeetSemiLattice_Morphism (_ ∘ _)) => class_apply @compose_meet_sl_morphism : typeclass_instances.
-Hint Extern 4 (BoundedJoinSemiLattice_Morphism (_ ∘ _)) => class_apply @compose_bounded_join_sl_morphism : typeclass_instances.
-Hint Extern 4 (Lattice_Morphism (_ ∘ _)) => class_apply @compose_lattice_morphism : typeclass_instances.
-Hint Extern 4 (JoinSemiLattice_Morphism (_⁻¹)) => class_apply @invert_join_sl_morphism : typeclass_instances.
-Hint Extern 4 (MeetSemiLattice_Morphism (_⁻¹)) => class_apply @invert_meet_sl_morphism : typeclass_instances.
-Hint Extern 4 (BoundedJoinSemiLattice_Morphism (_⁻¹)) => class_apply @invert_bounded_join_sl_morphism : typeclass_instances.
-Hint Extern 4 (Lattice_Morphism (_⁻¹)) => class_apply @invert_lattice_morphism : typeclass_instances.
+Global Hint Extern 4 (JoinSemiLattice_Morphism (_ ∘ _)) => class_apply @compose_join_sl_morphism : typeclass_instances.
+Global Hint Extern 4 (MeetSemiLattice_Morphism (_ ∘ _)) => class_apply @compose_meet_sl_morphism : typeclass_instances.
+Global Hint Extern 4 (BoundedJoinSemiLattice_Morphism (_ ∘ _)) => class_apply @compose_bounded_join_sl_morphism : typeclass_instances.
+Global Hint Extern 4 (Lattice_Morphism (_ ∘ _)) => class_apply @compose_lattice_morphism : typeclass_instances.
+Global Hint Extern 4 (JoinSemiLattice_Morphism (_⁻¹)) => class_apply @invert_join_sl_morphism : typeclass_instances.
+Global Hint Extern 4 (MeetSemiLattice_Morphism (_⁻¹)) => class_apply @invert_meet_sl_morphism : typeclass_instances.
+Global Hint Extern 4 (BoundedJoinSemiLattice_Morphism (_⁻¹)) => class_apply @invert_bounded_join_sl_morphism : typeclass_instances.
+Global Hint Extern 4 (Lattice_Morphism (_⁻¹)) => class_apply @invert_lattice_morphism : typeclass_instances.

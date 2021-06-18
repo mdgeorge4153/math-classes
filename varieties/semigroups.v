@@ -132,5 +132,5 @@ Section specialized.
   Qed.
 End specialized.
 
-Hint Extern 4 (SemiGroup_Morphism (_ ∘ _)) => class_apply @compose_sg_morphism : typeclass_instances.
-Hint Extern 4 (SemiGroup_Morphism (_⁻¹)) => class_apply @invert_sg_morphism : typeclass_instances.
+Global Hint Extern 4 (SemiGroup_Morphism (_ ∘ _)) => class_apply @compose_sg_morphism : typeclass_instances.
+Global Hint Extern 4 (SemiGroup_Morphism (_⁻¹)) => class_apply @invert_sg_morphism : typeclass_instances.

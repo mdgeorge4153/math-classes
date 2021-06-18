@@ -82,10 +82,10 @@ Section compositions.
   Instance compose_bijective: Bijective f → Bijective g → Bijective (f ∘ g) := {}.
 End compositions.
 
-Hint Extern 4 (Inverse (_ ∘ _)) => class_apply @compose_inverse : typeclass_instances.
-Hint Extern 4 (Injective (_ ∘ _)) => class_apply @compose_injective : typeclass_instances.
-Hint Extern 4 (Surjective (_ ∘ _)) => class_apply @compose_surjective : typeclass_instances.
-Hint Extern 4 (Bijective (_ ∘ _)) => class_apply @compose_bijective : typeclass_instances.
+Global Hint Extern 4 (Inverse (_ ∘ _)) => class_apply @compose_inverse : typeclass_instances.
+Global Hint Extern 4 (Injective (_ ∘ _)) => class_apply @compose_injective : typeclass_instances.
+Global Hint Extern 4 (Surjective (_ ∘ _)) => class_apply @compose_surjective : typeclass_instances.
+Global Hint Extern 4 (Bijective (_ ∘ _)) => class_apply @compose_bijective : typeclass_instances.
 
 Lemma alt_Build_Injective `{Equiv A} `{Equiv B} (f : A → B) `{!Inverse f} :
   Setoid_Morphism f → Setoid_Morphism (f⁻¹) → f⁻¹ ∘ f = id → Injective f.
@@ -107,14 +107,14 @@ Proof.
 Qed.
 
 Definition inverse_inverse `{Inverse A B f} : Inverse (f⁻¹) := f.
-Hint Extern 4 (Inverse (_ ⁻¹)) => class_apply @inverse_inverse : typeclass_instances.
+Global Hint Extern 4 (Inverse (_ ⁻¹)) => class_apply @inverse_inverse : typeclass_instances.
 
 Lemma flip_bijection `{Bijective A B f} : Bijective (f⁻¹).
 Proof. apply alt_Build_Bijective; try apply _. apply (surjective f). apply (bijective f). Qed.
 
 (* We use this instead of making flip_bijection a real instance, because
    otherwise it gets applied too eagerly, resulting in cycles. *)
-Hint Extern 4 (Bijective (_ ⁻¹)) => apply flip_bijection : typeclass_instances.
+Global Hint Extern 4 (Bijective (_ ⁻¹)) => apply flip_bijection : typeclass_instances.
 
 Lemma inverse_involutive `(f : A → B) `{!Inverse f} : (f⁻¹)⁻¹ ≡ f.
 Proof. reflexivity. Qed.

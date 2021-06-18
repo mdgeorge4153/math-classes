@@ -133,8 +133,8 @@ Qed.
 End field_properties.
 
 (* Due to bug #2528 *)
-Hint Extern 8 (PropHolds (// _ ≶ 0)) => eapply @recip_apart_zero : typeclass_instances.
-Hint Extern 8 (PropHolds (_ * _ ≶ 0)) => eapply @mult_apart_zero : typeclass_instances.
+Global Hint Extern 8 (PropHolds (// _ ≶ 0)) => eapply @recip_apart_zero : typeclass_instances.
+Global Hint Extern 8 (PropHolds (_ * _ ≶ 0)) => eapply @mult_apart_zero : typeclass_instances.
 
 Section morphisms.
   Context `{Field F1} `{Field F2} `{!StrongSemiRing_Morphism (f : F1 → F2)}.

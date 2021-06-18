@@ -5,7 +5,7 @@ Instance default_mon_join `{MonadBind M} : MonadJoin M | 20 := λ _, bind id.
 Instance default_mon_map `{MonadReturn M} `{MonadBind M} : SFmap M | 20 := λ _ _ f, bind (ret ∘ f).
 Instance default_mon_bind `{SFmap M} `{MonadJoin M} : MonadBind M | 20 := λ _ _ f, join ∘ (sfmap f).
 
-Hint Extern 0 (ProperProxy (@respectful _ _ _ _) _) =>
+Global Hint Extern 0 (ProperProxy (@respectful _ _ _ _) _) =>
   class_apply @proper_proper_proxy : typeclass_instances.
 
 Instance equiv_ext_equiv `{Equiv A} `{Equiv B} :

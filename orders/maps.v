@@ -278,10 +278,10 @@ Section composition.
     OrderEmbedding f → OrderEmbedding g → OrderEmbedding (g ∘ f) := {}.
 End composition.
 
-Hint Extern 4 (Order_Morphism (_ ∘ _)) => class_apply @compose_order_morphism : typeclass_instances.
-Hint Extern 4 (OrderPreserving (_ ∘ _)) => class_apply @compose_order_preserving : typeclass_instances.
-Hint Extern 4 (OrderReflecting (_ ∘ _)) => class_apply @compose_order_reflecting : typeclass_instances.
-Hint Extern 4 (OrderEmbedding (_ ∘ _)) => class_apply @compose_order_embedding : typeclass_instances.
+Global Hint Extern 4 (Order_Morphism (_ ∘ _)) => class_apply @compose_order_morphism : typeclass_instances.
+Global Hint Extern 4 (OrderPreserving (_ ∘ _)) => class_apply @compose_order_preserving : typeclass_instances.
+Global Hint Extern 4 (OrderReflecting (_ ∘ _)) => class_apply @compose_order_reflecting : typeclass_instances.
+Global Hint Extern 4 (OrderEmbedding (_ ∘ _)) => class_apply @compose_order_embedding : typeclass_instances.
 
 Section propers.
   Context `{Equiv A} `{Equiv B} `{Le A} `{Le B}.
