@@ -5,6 +5,7 @@ cones.
 
 Require Import
   MathClasses.interfaces.abstract_algebra
+  MathClasses.interfaces.orders
   MathClasses.misc.group_automation.
 
 
@@ -22,7 +23,6 @@ Class SemiGroupCone (cone_contains : A -> Prop) :=
   { sgcone_sg     : SemiGroup A
   ; sgcone_proper :> Proper ((=) ==> iff) cone_contains
   ; sgcone_sgop   : ∀ x y : A, cone_contains x -> cone_contains y -> cone_contains (x & y)
-(*  ; sgcone_flip   : ∀ x y : A, cone_contains (x & y) -> cone_contains (y & x)*)
   }.
 
 Context  `{MonUnit A} `{Negate A}.
@@ -50,7 +50,6 @@ Context `{Negate A}.
 Class RingCone (cone_contains : A -> Prop) :=
   { rcone_srcone :> SemiRingCone cone_contains
   ; rcone_ring   : Ring A
-  ; rcone_mult   : ∀ x y : A, cone_contains x -> cone_contains y -> cone_contains (x * y)
   }.
 
 Context `{DecRecip A}.
@@ -111,11 +110,8 @@ Notation "(~)" := (cone_relation cone_contains).
 Lemma cone_rel_compat_right : ∀ x y z, x ~ y -> x & z ~ y & z.
 Proof. intros; unfold cone_relation; group_simplify; easy. Qed.
 
-(*
-Lemma cone_rel_compat_left : ∀ x y z, x ~ y -> z & x ~ z & y.
-Proof. intros; unfold cone_relation;
-  apply sgcone_flip; group_simplify; apply sgcone_flip. easy. Qed.
-*)
+Instance: Proper ((=) ==> (=) ==> iff) (~).
+Proof. unfold cone_relation; repeat red; intros x1 y1 eq1 x2 y2 eq2; rewrite eq1, eq2; easy. Qed.
 
 Instance: Transitive (~).
 Proof.
@@ -126,7 +122,7 @@ Qed.
 
 Context `{!GroupCone cone_contains}.
 
-Instance : Antisymmetric A (=) (~).
+Instance : AntiSymmetric (~).
 Proof. red. intros; unfold cone_relation in *.
 assert (x & -y = mon_unit) as eq_unit.
   apply gcone_both; try setoid_replace (- (x & -y)) with (y & -x) by group; easy.
@@ -136,19 +132,40 @@ Qed.
 Section WeakOrder.
 Context `{!WeakCone cone_contains}.
 
-Instance : Reflexive (~).
+Instance le_cone: Le A := (~).
+
+Instance : Reflexive (≤).
 Proof. repeat red; intros; group_simplify; exact wcone_weak. Qed.
 
-Instance : PreOrder (~).
+Instance : PartialOrder (≤).
 Proof. repeat (split; try apply _). Qed.
 
-Instance : PartialOrder (=) (~).
-Proof. split.
-  intro xeq; repeat red; split; repeat red; rewrite xeq; group_simplify; exact wcone_weak.
-  intro xeq; repeat red in xeq; destruct xeq as [xrel xrelflip]. red in xrel; repeat red in xrelflip.
-  setoid_replace (x & -x0) with (-(x0 & -x)) in xrelflip by group.
-  apply symmetry. group. apply gcone_both; easy.
-  Qed.
+Context `{!TotalCone cone_contains}.
+
+Instance: TotalRelation (≤).
+Proof. repeat red; intros.
+unfold le, le_cone, cone_relation. setoid_replace (y & -x) with (-(x & -y)) by group.
+  destruct (tcone_total (x & -y)) as [pos | [nonneg | unit]]; auto.
+    rewrite unit; right. exact wcone_weak.
+Qed.
 
 End WeakOrder.
+
+Section StrictOrder.
+Context `{!StrictCone cone_contains}.
+
+Instance lt_cone: Lt A := (~).
+
+Instance : Irreflexive (<).
+Proof. repeat red; intros x equiv;
+  apply scone_strict;
+  unfold lt, lt_cone, cone_relation in equiv;
+  rewrite right_inverse in equiv;
+  assumption.
+  Qed.
+
+Instance: StrictSetoidOrder (<).
+Proof. repeat (split; try apply _). Qed.
+
+End StrictOrder.
 
