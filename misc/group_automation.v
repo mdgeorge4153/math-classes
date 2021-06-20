@@ -7,6 +7,7 @@ Require Import
   MathClasses.interfaces.orders
   MathClasses.theory.groups
   MathClasses.implementations.peano_naturals
+  Coq.Init.Nat
   Psatz.
 
 Import ListNotations.
@@ -14,6 +15,8 @@ Import ListNotations.
 Section GroupAutomation.
 
 Context `{Group A}.
+
+(* Basic reflection of group expressions **************************************)
 
 Inductive gexp : Type :=
   | Atomic   : nat -> gexp
@@ -29,12 +32,6 @@ Fixpoint gexp_denote (env : list A) (e : gexp) : A := match e with
   | Inverse a => - (gexp_denote env a)
   end.
 
-Function gexp_list_denote (env : list A) (e : list gexp) : A := match e with
-  | []    => mon_unit
-  | x::[] => gexp_denote env x
-  | e::es => gexp_list_denote env es & gexp_denote env e
-  end.
-
 Fixpoint gexp_height a : nat := match a with
   | Atomic _    => 0
   | Identity    => 0
@@ -42,19 +39,13 @@ Fixpoint gexp_height a : nat := match a with
   | Inverse a   => 1 + gexp_height a
   end.
 
-(* flatten produces a list that only contains Atomics and Inverse Atomics *)
-Function flatten (e : gexp) {measure gexp_height} : list gexp :=
-  match e with
-  | GroupOp a b           => flatten b ++ flatten a
-  | Inverse (GroupOp a b) => flatten (Inverse a) ++ flatten (Inverse b)
-  | Inverse Identity      => []
-  | Inverse (Inverse a)   => flatten a
-  | Inverse (Atomic a)    => [Inverse (Atomic a)]
-  | Identity              => []
-  | Atomic a              => [Atomic a]
-end.
-all: intros; simpl; lia.
-Defined.
+(* Representing a group expression as a list of Atomics and Inverses **********)
+
+Function gexp_list_denote (env : list A) (e : list gexp) : A := match e with
+  | []    => mon_unit
+  | x::[] => gexp_denote env x
+  | e::es => gexp_list_denote env es & gexp_denote env e
+  end.
 
 Lemma denote_append : ∀ env a b,
   gexp_list_denote env (a ++ b) = (gexp_list_denote env b) & (gexp_list_denote env a).
@@ -77,6 +68,22 @@ Proof. intros. functional induction (gexp_list_denote env) b.
     simpl. reflexivity.
 Qed.
 
+(* Flattening group expressions ***********************************************)
+
+(* flatten transforms e into a list that only contains Atomics and Inverse Atomics *)
+Function flatten (e : gexp) {measure gexp_height} : list gexp :=
+  match e with
+  | GroupOp a b           => flatten b ++ flatten a
+  | Inverse (GroupOp a b) => flatten (Inverse a) ++ flatten (Inverse b)
+  | Inverse Identity      => []
+  | Inverse (Inverse a)   => flatten a
+  | Inverse (Atomic a)    => [Inverse (Atomic a)]
+  | Identity              => []
+  | Atomic a              => [Atomic a]
+end.
+all: intros; simpl; lia.
+Defined.
+
 Theorem flatten_correct: ∀ (env : list A) (e : gexp),
   gexp_denote env e = gexp_list_denote env (flatten e).
 Proof. intros env e; functional induction (flatten e); simpl.
@@ -88,6 +95,8 @@ Proof. intros env e; functional induction (flatten e); simpl.
   reflexivity.
   reflexivity.
 Qed.
+
+(* Cancelling out adjacent inverses *******************************************)
 
 Function cancel (es : list gexp) {struct es} :=
 match es with
@@ -111,6 +120,56 @@ Proof. intros env es. functional induction cancel es.
   repeat rewrite denote_cons. rewrite IHl. reflexivity.
 Qed.
 
+(* Reorganizing equations *****************************************************)
+
+Lemma move_to_left : ∀ a b, a & -b = mon_unit -> a = b.
+Proof. intros. setoid_replace b with (a & -b & b).
+  rewrite <- associativity. rewrite left_inverse. rewrite right_identity. reflexivity.
+  rewrite H0. rewrite left_identity. reflexivity.
+Qed.
+
+
+(**
+ * einvs should be the simplified inverse of es, so that the tail of es is the
+ * inverse of the head of einvs.
+ *)
+Function deconjugate_mirrors (front : list gexp) (back : list gexp) : list gexp :=
+  match front, back with
+    |         (Atomic n) :: es', Inverse (Atomic m) :: einvs'
+    | Inverse (Atomic n) :: es',         (Atomic m) :: einvs' =>
+      if decide(n = m) then deconjugate_mirrors es' einvs'
+      else front ++ rev back
+    | _, _ => front ++ rev back
+  end.
+
+Lemma deconj_mirrors_correct : ∀ f b : list gexp, ∀ env,
+  gexp_list_denote env (deconjugate_mirrors f b) = mon_unit ->
+  gexp_list_denote env (f ++ rev b) = mon_unit.
+Proof. intros f b env assum; functional induction deconjugate_mirrors f b; (try assumption);
+  simpl rev; repeat rewrite denote_append, denote_cons; simpl;
+  match goal with
+    | [ |- (mon_unit & ?x & ?y & (?z & ?w)) = mon_unit ] => setoid_replace (mon_unit & x & y & (z & w)) with (x & (y & z) & w) by group
+  end;
+  rewrite _x; rewrite denote_append in IHl; rewrite IHl by assumption; group.
+Qed.
+
+Definition deconjugate `(xs : list gexp) :=
+  let n     := div (length xs) 2 in
+  let front := firstn n xs in
+  let back  := rev (skipn  n xs) in
+  deconjugate_mirrors front back.
+
+Lemma deconj_correct : ∀ xs env,
+  gexp_list_denote env (deconjugate xs) = mon_unit ->
+  gexp_list_denote env xs = mon_unit.
+Proof. unfold deconjugate. intros xs env deconj_unit.
+apply deconj_mirrors_correct in deconj_unit.
+rewrite rev_involutive, firstn_skipn in deconj_unit.
+assumption.
+Qed.
+
+(* Main theorems for rewriting goals ******************************************)
+
 Theorem group_reflect : ∀ env e1 e2,
   gexp_list_denote env (cancel (flatten e1)) = gexp_list_denote env (cancel (flatten e2))
   -> gexp_denote env e1 = gexp_denote env e2.
@@ -120,24 +179,20 @@ Proof. intros;
   assumption.
 Qed.
 
-Lemma move_to_left : ∀ a b, a & -b = mon_unit -> a = b.
-Proof. intros. setoid_replace b with (a & -b & b).
-  rewrite <- associativity. rewrite left_inverse. rewrite right_identity. reflexivity.
-  rewrite H0. rewrite left_identity. reflexivity.
-Qed.
-
 
 Theorem group_reflect_flip : ∀ env e1 e2,
-  gexp_list_denote env (cancel (flatten (GroupOp e1 (Inverse e2)))) = mon_unit
+  gexp_list_denote env (deconjugate (cancel (flatten (GroupOp e1 (Inverse e2))))) = mon_unit
   -> gexp_denote env e1 = gexp_denote env e2.
 Proof. intros. apply move_to_left.
 replace (gexp_denote env e1 & - gexp_denote env e2)
    with (gexp_denote env (GroupOp e1 (Inverse e2))).
-    rewrite flatten_correct. rewrite cancel_correct. assumption.
+    rewrite flatten_correct. rewrite cancel_correct. rewrite deconj_correct. reflexivity. assumption.
     simpl. reflexivity.
 Qed.
 
 End GroupAutomation.
+
+(* Ltac refification **********************************************************)
 
 Ltac inList x xs := match xs with
   | []      => false
@@ -213,6 +268,12 @@ Proof. intros. group. Qed.
 
 Lemma group_test2 `{Group A}: ∀ x y z, -x & y = - (z & x) & (z & y).
 Proof. intros; group. Qed.
+
+Lemma group_test3 `{Group A}: ∀ x y,
+  y = mon_unit -> -x & y & x = mon_unit.
+Proof. intros. group. Qed.
+
+(** Reordering in abelian groups **********************************************)
 
 Module TermOrder <: TotalLeBool.
   Definition t := gexp.
