@@ -49,6 +49,7 @@ Context `{Negate A}.
 
 Class RingCone (cone_contains : A -> Prop) :=
   { rcone_srcone :> SemiRingCone cone_contains
+  ; rcone_gcone  :> @GroupCone A Aeq plus_is_sg_op zero_is_mon_unit negate cone_contains
   ; rcone_ring   : Ring A
   }.
 
