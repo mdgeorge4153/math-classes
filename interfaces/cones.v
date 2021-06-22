@@ -1,35 +1,91 @@
 (*
-This file gives an alternative characterization of ring orderings based on positive
-cones.
+This file gives an alternative characterization of ring orderings based on
+positive cones.  The typeclasses here are based on a math overflow post by
+David Feuer: https://math.stackexchange.com/q/293000
+
+A cone is a subset that is closed under the operations of the algebraic
+structure.  Think of it as an axiomatization of the set of positive (or
+nonnegative) elements.
+
+We can generalize the relationship between positivity and ordering as follows:
+Given a cone C on A, we can derive a relation R on A by x R y if y - x ∈ C.  If
+C is the set of nonnegative elements then R is (≤), while if C is the set of
+positive elements then R is (<).  Similarly, we can translate an
+ordering R into a cone.
+
+The classes of cones here vary on three axes.  The first axis is
+the algebraic structure:
+
+* a SemiGroupCone is closed under (&).
+  For SemiGroupCones, (&) is order preserving in R.
+
+* a GroupCone interacts appropriately with inverses.
+  For GroupCones, R antisymmetric and transitive.
+
+* a RingCone  is closed under (+) and ( * ).
+
+* a FieldCone behaves appropriately with multiplicative inverses
+
+The second axis is the strictness:
+
+* WeakCones contain the unit element.  They generalize nonnegativity, and
+  the relation R behaves like (≤).
+
+* StrictCones do not contain the unit.  They generalize positivity, and
+  the relation R behaves like (<).
+
+The third axis is totality:
+
+* TotalCones require that every element is either in the cone or its negation.
+  The corrseponding relation will be a total order.
+
+These replationships between cone properties and relation properties are proved
+in theory.cones.
+
 *)
 
 Require Import
   MathClasses.interfaces.abstract_algebra
-  MathClasses.interfaces.orders
-  MathClasses.misc.group_automation.
-
+  MathClasses.interfaces.orders.
 
 (** Operational typeclasses ***************************************************)
 Class IsNonNeg A := is_nonneg : A -> Prop.
 Class IsPos    A := is_pos    : A -> Prop.
+
+Section PositivityAndOrders.
+
+Context `{Group A}.
+
+Definition cone_relation (cone_contains : A -> Prop) : relation A :=
+  λ x y, cone_contains (y & (- x)).
+
+Definition relation_cone (compare : relation A) : A -> Prop :=
+  λ x, compare mon_unit x.
+
+Global Instance le_nonneg `{Le A} : IsNonNeg A := relation_cone le.
+Global Instance lt_pos    `{Lt A} : IsPos A    := relation_cone lt.
+Global Instance nonneg_le `{IsNonNeg A} : Le A := cone_relation is_nonneg.
+Global Instance pos_lt    `{IsPos    A} : Lt A := cone_relation is_pos.
+
+End PositivityAndOrders.
 
 (** Cones for group-like objects **********************************************)
 Section GroupCones.
 
 Context `{Equiv A} `{SgOp A}.
 
-(* As suggested by David Feuer: https://math.stackexchange.com/q/293000 *)
 Class SemiGroupCone (cone_contains : A -> Prop) :=
-  { sgcone_sg     : SemiGroup A
+  { sgcone_sg     :  SemiGroup A
   ; sgcone_proper :> Proper ((=) ==> iff) cone_contains
-  ; sgcone_sgop   : ∀ x y : A, cone_contains x -> cone_contains y -> cone_contains (x & y)
+  ; sgcone_sgop   :  ∀ x y : A, cone_contains x -> cone_contains y -> cone_contains (x & y)
   }.
 
 Context  `{MonUnit A} `{Negate A}.
 
 Class GroupCone (cone_contains : A -> Prop) :=
-  { gcone_group : Group A
-  ; gcone_both  : ∀ x : A, cone_contains x -> cone_contains (-x) -> x = mon_unit
+  { gcone_group  :  Group A
+  ; gcone_sgcone :> SemiGroupCone cone_contains
+  ; gcone_both   :  ∀ x : A, cone_contains x -> cone_contains (-x) -> x = mon_unit
   }.
 
 End GroupCones.
@@ -40,9 +96,9 @@ Section RingCones.
 Context `{Aeq: Equiv A} `{Plus A} `{Mult A} `{Zero A} `{One A}.
 
 Class SemiRingCone (cone_contains : A -> Prop) :=
-  { srcone_sr        : SemiRing A
-  ; srcone_plus_cone : @SemiGroupCone A Aeq plus_is_sg_op cone_contains
-  ; srcone_mult_cone : @SemiGroupCone A Aeq mult_is_sg_op cone_contains
+  { srcone_sr        :  SemiRing A
+  ; srcone_plus_cone :> @SemiGroupCone A Aeq plus_is_sg_op cone_contains
+  ; srcone_mult_cone :> @SemiGroupCone A Aeq mult_is_sg_op cone_contains
   }.
 
 Context `{Negate A}.
@@ -86,87 +142,4 @@ Class TotalCone (cone_contains : A -> Prop) :=
   }.
 
 End ConeProperties.
-
-(**
- * Given a cone on A, we can form a relation R on A.  This generalizes the
- * relationship between positivity and ordering.
- *
- * We show various corrsepondences between order properties and cone properties.
- *)
-Section ConeOrders.
-
-Context `{Group A}.
-
-Definition cone_relation (cone_contains : A -> Prop) : relation A :=
-  λ x y, cone_contains (y & (- x)).
-
-Definition relation_cone (compare : relation A) : A -> Prop :=
-  λ x, compare mon_unit x.
-
-Context `{!SemiGroupCone cone_contains}.
-
-Infix "~" := (cone_relation cone_contains) (at level 70, no associativity).
-Notation "(~)" := (cone_relation cone_contains).
-
-Lemma cone_rel_compat_right : ∀ x y z, x ~ y -> x & z ~ y & z.
-Proof. intros; unfold cone_relation; group_simplify; easy. Qed.
-
-Instance: Proper ((=) ==> (=) ==> iff) (~).
-Proof. unfold cone_relation; repeat red; intros x1 y1 eq1 x2 y2 eq2; rewrite eq1, eq2; easy. Qed.
-
-Instance: Transitive (~).
-Proof.
-  repeat red; intros; unfold cone_relation;
-  setoid_replace (z & -x) with ((z & -y) & (y & -x)) by group;
-  apply sgcone_sgop; easy.
-Qed.
-
-Context `{!GroupCone cone_contains}.
-
-Instance : AntiSymmetric (~).
-Proof. red. intros; unfold cone_relation in *.
-assert (x & -y = mon_unit) as eq_unit.
-  apply gcone_both; try setoid_replace (- (x & -y)) with (y & -x) by group; easy.
-setoid_replace y with (mon_unit & y) by group; rewrite <- eq_unit; group.
-Qed.
-
-Section WeakOrder.
-Context `{!WeakCone cone_contains}.
-
-Instance le_cone: Le A := (~).
-
-Instance : Reflexive (≤).
-Proof. repeat red; intros; group_simplify; exact wcone_weak. Qed.
-
-Instance : PartialOrder (≤).
-Proof. repeat (split; try apply _). Qed.
-
-Context `{!TotalCone cone_contains}.
-
-Instance: TotalRelation (≤).
-Proof. repeat red; intros.
-unfold le, le_cone, cone_relation. setoid_replace (y & -x) with (-(x & -y)) by group.
-  destruct (tcone_total (x & -y)) as [pos | [nonneg | unit]]; auto.
-    rewrite unit; right. exact wcone_weak.
-Qed.
-
-End WeakOrder.
-
-Section StrictOrder.
-Context `{!StrictCone cone_contains}.
-
-Instance lt_cone: Lt A := (~).
-
-Instance : Irreflexive (<).
-Proof. repeat red; intros x equiv;
-  apply scone_strict;
-  unfold lt, lt_cone, cone_relation in equiv;
-  rewrite right_inverse in equiv;
-  assumption.
-  Qed.
-
-Instance: StrictSetoidOrder (<).
-Proof. repeat (split; try apply _). Qed.
-
-End StrictOrder.
 
