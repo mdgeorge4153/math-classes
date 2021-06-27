@@ -62,10 +62,10 @@ Definition cone_relation (cone_contains : A -> Prop) : relation A :=
 Definition relation_cone (compare : relation A) : A -> Prop :=
   λ x, compare mon_unit x.
 
-Global Instance le_nonneg `{Le A} : IsNonNeg A := relation_cone le.
-Global Instance lt_pos    `{Lt A} : IsPos A    := relation_cone lt.
-Global Instance nonneg_le `{IsNonNeg A} : Le A := cone_relation is_nonneg.
-Global Instance pos_lt    `{IsPos    A} : Lt A := cone_relation is_pos.
+Instance cone_rel_is_le   `{f : IsNonNeg A} : Le A := cone_relation is_nonneg.
+Instance cone_rel_is_lt   `{f : IsPos    A} : Lt A := cone_relation is_pos.
+Instance rel_cone_is_nneg `{Rle : Le A} : IsNonNeg A := relation_cone le.
+Instance rel_cone_is_pos  `{Rlt : Lt A} : IsPos A    := relation_cone lt.
 
 End PositivityAndOrders.
 
@@ -90,7 +90,7 @@ Class GroupCone (cone_contains : A -> Prop) :=
 
 End GroupCones.
 
-(** Operations for ring-like objects ******************************************)
+(** Cones for ring-like objects ***********************************************)
 Section RingCones.
 
 Context `{Aeq: Equiv A} `{Plus A} `{Mult A} `{Zero A} `{One A}.
@@ -119,6 +119,7 @@ Class FieldCone (cone_contains : A -> Prop) :=
 
 End RingCones.
 
+(** Properties of cones *******************************************************)
 Section ConeProperties.
 
 Context `{Group A}.
