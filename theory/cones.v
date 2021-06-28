@@ -14,23 +14,23 @@ Require Import
 Section relation_from_cone.
   Context `{Group A} `{!SemiGroupCone cone_contains}.
 
-  Local Infix "~" := (cone_relation cone_contains) (at level 70, no associativity).
-  Local Notation "(~)" := (cone_relation cone_contains).
+  Local Infix "⊏" := (cone_relation cone_contains) (at level 70, no associativity).
+  Local Notation "(⊏)" := (cone_relation cone_contains).
 
-  Lemma cone_rel_compat_right : ∀ x y z, x ~ y -> x & z ~ y & z.
+  Lemma cone_rel_compat_right : ∀ x y z, x ⊏ y -> x & z ⊏ y & z.
   Proof. intros; unfold cone_relation; group_simplify; easy. Qed.
 
-  Lemma cone_rel_compat_left `{!AbGroup A}: ∀ x y z, x ~ y -> z & x ~ z & y.
+  Lemma cone_rel_compat_left `{!AbGroup A}: ∀ x y z, x ⊏ y -> z & x ⊏ z & y.
   Proof. intros; unfold cone_relation; repeat rewrite (commutativity z); group_simplify; easy. Qed.
 
   (* TODO: is this the proper use of Proper? *)
-  Global Instance: ∀ z, Proper ((~) ==> (~)) (& z).
+  Global Instance: ∀ z, Proper ((⊏) ==> (⊏)) (& z).
   Proof. intros. red. red. intros. apply cone_rel_compat_right. assumption. Qed.
 
-  Global Instance: Proper ((=) ==> (=) ==> iff) (~).
+  Global Instance: Proper ((=) ==> (=) ==> iff) (⊏).
   Proof. unfold cone_relation; repeat red; intros x1 y1 eq1 x2 y2 eq2; rewrite eq1, eq2; easy. Qed.
 
-  Global Instance: Transitive (~).
+  Global Instance: Transitive (⊏).
   Proof.
     repeat red; intros; unfold cone_relation;
     setoid_replace (z & -x) with ((z & -y) & (y & -x)) by group;
@@ -39,7 +39,7 @@ Section relation_from_cone.
 
   Context `{!GroupCone cone_contains}.
 
-  Global Instance: AntiSymmetric (~).
+  Global Instance: AntiSymmetric (⊏).
   Proof. red. intros; unfold cone_relation in *.
   assert (x & -y = mon_unit) as eq_unit.
     apply gcone_both; try setoid_replace (- (x & -y)) with (y & -x) by group; easy.
@@ -142,13 +142,13 @@ Section rcone_closed.
   Context `{Ring A} `{!RingCone cone}.
   Add Ring R : (stdlib_ring_theory A).
 
-  Local Infix "~" := (cone_relation cone) (at level 70, no associativity).
-  Local Notation "(~)" := (cone_relation cone).
+  Local Infix "⊏" := (cone_relation cone) (at level 70, no associativity).
+  Local Notation "(⊏)" := (cone_relation cone).
 
   Lemma foo : ∀ x, x - 0 = x.
   Proof. intros. ring. Qed.
 
-  Lemma mult_spec : ∀ x y, PropHolds (0 ~ x) -> PropHolds (0 ~ y) -> PropHolds (0 ~ x * y).
+  Lemma mult_spec : ∀ x y, PropHolds (0 ⊏ x) -> PropHolds (0 ⊏ y) -> PropHolds (0 ⊏ x * y).
   Proof. unfold PropHolds; unfold cone_relation, sg_op, plus_is_sg_op. fold plus.
     intros. rewrite foo in *. apply sgcone_sgop; assumption.
   Qed.
