@@ -45,6 +45,7 @@ in theory.cones.
 *)
 
 Require Import
+  Coq.Classes.Morphisms
   MathClasses.interfaces.abstract_algebra
   MathClasses.interfaces.orders.
 
@@ -68,6 +69,9 @@ Instance rel_cone_is_nneg `{Rle : Le A} : IsNonNeg A := relation_cone le.
 Instance rel_cone_is_pos  `{Rlt : Lt A} : IsPos A    := relation_cone lt.
 
 End PositivityAndOrders.
+
+Instance: Params (@cone_relation) 3 := {}.
+Instance: Params (@relation_cone) 2 := {}.
 
 (** Cones for group-like objects **********************************************)
 Section GroupCones.
