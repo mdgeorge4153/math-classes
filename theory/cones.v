@@ -45,6 +45,18 @@ Section relation_from_cone.
     apply gcone_both; try setoid_replace (- (x & -y)) with (y & -x) by group; easy.
   setoid_replace y with (mon_unit & y) by group; rewrite <- eq_unit; group.
   Qed.
+
+  Context `{!TotalCone cone_contains}.
+
+  Global Instance : Trichotomy (⊏).
+  Proof. red. unfold cone_relation; intros.
+    setoid_replace (y & -x) with (-(x & -y)) by group.
+    destruct (tcone_total (x & -y)) as [lt | [gt | eq]].
+      right; right; assumption.
+      left; assumption.
+      right; left; setoid_replace y with (mon_unit & y) by group; rewrite <- eq; group.
+  Qed.
+
 End relation_from_cone.
 
 (*******************************************************************************
@@ -67,9 +79,10 @@ Section le_from_nonneg.
 
   Global Instance : TotalRelation (≤).
   Proof. repeat red; intros.
-  unfold le, cone_rel_is_le, cone_relation. setoid_replace (y & -x) with (-(x & -y)) by group.
-    destruct (tcone_total (x & -y)) as [pos | [nonneg | unit]]; auto.
-      rewrite unit; right. exact wcone_weak.
+    destruct (trichotomy (≤) x y) as [leq | [eq | geq]].
+      left; assumption.
+      left; rewrite eq; reflexivity.
+      right; assumption.
   Qed.
 End le_from_nonneg.
 
@@ -95,27 +108,17 @@ Section lt_from_pos.
   Global Instance: StrictSetoidOrder (<).
   Proof. repeat (split; try apply _). Qed.
 
-  Context `{!TotalCone cone} `{∀ x y, Decision (x = y)}.
-
-  Global Instance: Trichotomy (<).
-  Proof.
-    red. unfold cone_relation; intros.
-    setoid_replace (y & -x) with (-(x & -y)) by group.
-    destruct (tcone_total (x & -y)) as [lt | [gt | eq]].
-      right; right; assumption.
-      left; assumption.
-      right; left; setoid_replace y with (mon_unit & y) by group; rewrite <- eq; group.
-  Qed.
+  Context `{!TotalCone cone}.
 
   Global Instance: CoTransitive (<).
   Proof. red. intros.
     destruct (trichotomy (<) x z) as [lt | [ eq | gt ] ].
       left; assumption.
-      right. assert (Symmetric equiv). typeclasses eauto.
-      rewrite <- eq. assumption.
+      right; rewrite <- eq; assumption.
       right; transitivity x; assumption.
   Qed.
 
+  Context `{∀ x y, Decision (x = y)}.
   Global Instance: PseudoOrder (<).
   Proof. split. apply dec_strong_setoid.
     intros x y lts; unfold lt, cone_rel_is_lt, cone_relation in *;
@@ -126,9 +129,9 @@ Section lt_from_pos.
         left; assumption.
         contradiction.
         right; assumption.
-    intros ineq. destruct ineq as [lt | gt].
-    repeat red. intros eq. rewrite eq in lt. apply scone_strict. repeat red in lt. rewrite right_inverse in lt. assumption.
-    repeat red. intros eq. rewrite eq in gt. apply scone_strict. repeat red in gt. rewrite right_inverse in gt. assumption.
+    intros ineq; destruct ineq as [ineq | ineq];
+      intros eq; apply scone_strict; rewrite eq in ineq;
+      repeat red in ineq; rewrite right_inverse in ineq; assumption.
     Qed.
 
 End lt_from_pos.
@@ -145,13 +148,14 @@ Section rcone_closed.
   Local Infix "⊏" := (cone_relation cone) (at level 70, no associativity).
   Local Notation "(⊏)" := (cone_relation cone).
 
-  Lemma foo : ∀ x, x - 0 = x.
+  Lemma subtract_zero : ∀ x, x - 0 = x.
   Proof. intros. ring. Qed.
 
   Lemma mult_spec : ∀ x y, PropHolds (0 ⊏ x) -> PropHolds (0 ⊏ y) -> PropHolds (0 ⊏ x * y).
-  Proof. unfold PropHolds; unfold cone_relation, sg_op, plus_is_sg_op. fold plus.
-    intros. rewrite foo in *. apply sgcone_sgop; assumption.
+  Proof. unfold PropHolds; unfold cone_relation, sg_op, plus_is_sg_op; fold plus;
+    intros; rewrite subtract_zero in *; apply sgcone_sgop; assumption.
   Qed.
+
 End rcone_closed.
 
 Section ring_order_from_rcone.
@@ -164,13 +168,15 @@ Section ring_order_from_rcone.
   Lemma weak_plus_spec: ∀ z, OrderPreserving (z +).
   Proof. repeat (split; try apply _); intros; apply cone_rel_compat_left; easy. Qed.
 
-  Instance: SemiRingOrder (≤).
+  Global Instance: SemiRingOrder (≤).
   Proof. apply from_ring_order. apply weak_plus_spec. apply mult_spec. Qed.
+
 End ring_order_from_rcone.
 
 Section strict_ring_order_from_rcone.
   Local Existing Instance plus_is_sg_op | 0.
   Context `{Ring A} `{!StrictCone cone} `{!RingCone cone}.
+  Add Ring R : (stdlib_ring_theory A).
 
   Local Instance: IsPos A := cone.
   Local Existing Instance cone_rel_is_lt | 0.
@@ -181,5 +187,29 @@ Section strict_ring_order_from_rcone.
   Lemma from_strict_ring_order: StrictSemiRingOrder (<).
   Proof. apply from_strict_ring_order. apply strict_plus_spec. apply mult_spec. Qed.
 
+  Context `{!TotalCone cone}.
+
+  Global Instance: NoZeroDivisors A.
+  Proof. intros x xzd; destruct xzd as [xnonzero [y [ynonzero xyzero]]];
+    destruct (tcone_total x) as [xpos | [xneg | xzero]];
+    destruct (tcone_total y) as [ypos | [yneg | yzero]];
+    apply scone_strict; try contradiction; change (cone 0).
+    all: match goal with
+      | [ _ : cone ?a , _ : cone ?b |- _ ] => setoid_replace 0 with (a * b); try (apply sgcone_sgop; assumption)
+    end.
+    all: (idtac + rewrite <- negate_mon_unit); rewrite <- xyzero; ring.
+  Qed.
+
 End strict_ring_order_from_rcone.
+
+(** Deriving cones from orders ************************************************)
+
+(* TODO *)
+
+(** Results about ordered rings ***********************************************)
+Section theory.
+  Local Existing Instance plus_is_sg_op | 0.
+  Context `{Ring A} `{!RingCone cone} `{!WeakCone cone} `{!TotalCone cone}.
+
+End theory.
 
