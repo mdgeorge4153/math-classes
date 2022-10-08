@@ -63,10 +63,15 @@ Definition cone_relation (cone_contains : A -> Prop) : relation A :=
 Definition relation_cone (compare : relation A) : A -> Prop :=
   λ x, compare mon_unit x.
 
-Instance cone_rel_is_le   `{f : IsNonNeg A} : Le A := cone_relation is_nonneg.
-Instance cone_rel_is_lt   `{f : IsPos    A} : Lt A := cone_relation is_pos.
-Instance rel_cone_is_nneg `{Rle : Le A} : IsNonNeg A := relation_cone le.
-Instance rel_cone_is_pos  `{Rlt : Lt A} : IsPos A    := relation_cone lt.
+Definition flipped_cone (cone_contains : A -> Prop) : A -> Prop :=
+  λ x, ¬ cone_contains (-x).
+
+Instance cone_rel_is_le   `{IsNonNeg A} : Le A := cone_relation is_nonneg.
+Instance cone_rel_is_lt   `{IsPos    A} : Lt A := cone_relation is_pos.
+Instance pos_from_nonneg  `{IsNonNeg A} : IsPos A := flipped_cone is_nonneg.
+Instance nonneg_from_pos  `{IsPos    A} : IsNonNeg A := flipped_cone is_pos.
+Instance rel_cone_is_nneg `{Le A} : IsNonNeg A := relation_cone le.
+Instance rel_cone_is_pos  `{Lt A} : IsPos A    := relation_cone lt.
 
 End PositivityAndOrders.
 
