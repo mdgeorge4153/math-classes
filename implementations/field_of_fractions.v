@@ -1,7 +1,7 @@
 Require Import 
   Coq.setoid_ring.Ring MathClasses.interfaces.abstract_algebra 
   MathClasses.theory.rings MathClasses.theory.dec_fields
-  MathClasses.interfaces.orders MathClasses.orders.rings.
+  MathClasses.interfaces.cones MathClasses.orders.rings.
 
 Inductive Frac R `{Rap : Equiv R} `{Rzero : Zero R} : Type := frac { num: R; den: R; den_ne_0: den ≠ 0 }.
   (* We used to have [den] and [den_nonzero] bundled, which did work relatively nicely with Program, but the
@@ -193,10 +193,17 @@ Qed.
 End morphisms.
 
 (*
-Section orders.
+Section cones.
 
 Context `{IntegralDomain R} `{∀ x y, Decision (x = y)}.
-Context `{!FullPseudoSemiRingOrder Rle Rlt} `{!TotalOrder Rle} `{∀ x y, Decision (x ≤ y)}.
+Context `{!RingCone cone_contains} `{!TotalCone cone_contains}.
+Context `{∀ x : R, Decide (cone_contains x)}.
+
+Definition normalize (x : Frac R) : Frac R :=
+    if decide (cone_contains (den x)) then x else frac (- num x) (- den x).
+
+Global Instance Frac_ispos : IsPos (Frac R) | 0. :=
+  λ x, (cone_contains (num x) /\ cone_contains (den x)) \/ (cone_contains (- num x
 
 Add Ring RO : (stdlib_ring_theory R).
 
