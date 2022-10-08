@@ -36,7 +36,7 @@ Section subalgebras.
 
   Definition carrier s := sig (P s).
 
-  Hint Unfold carrier: typeclass_instances.
+  Hint Extern 4 => progress unfold carrier: typeclass_instances.
 
   (* We can implement closed operations in the new algebra: *)
 
@@ -97,4 +97,5 @@ Section subalgebras.
   Qed. (* this really should be completely automatic. *)
 End subalgebras.
 
+#[global]
 Hint Extern 10 (Equiv (carrier _ _)) => apply @sig_equiv : typeclass_instances.

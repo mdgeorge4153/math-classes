@@ -4,6 +4,7 @@ Require Import
   MathClasses.implementations.field_of_fractions MathClasses.implementations.natpair_integers
   MathClasses.theory.rings MathClasses.theory.integers MathClasses.theory.dec_fields.
 
+#[global]
 Program Instance slow_rat_dec `{Rationals Q} : ∀ x y: Q, Decision (x = y) | 10 := λ x y,
   match decide (rationals_to_frac Q (SRpair nat) x = rationals_to_frac Q (SRpair nat) y) with
   | left E => left _
@@ -80,10 +81,13 @@ Qed.
 
 Definition rationals_to_rationals Q1 Q2 `{Rationals Q1} `{Rationals Q2} : Q1 → Q2
   := (rationals_to_frac Q2 (SRpair nat))⁻¹ ∘ rationals_to_frac Q1 (SRpair nat).
+#[global]
 Hint Unfold rationals_to_rationals : typeclass_instances.
 
 Section another_rationals.
   Context `{Rationals Q1} `{Rationals Q2}.
+
+  Hint Extern 4 => progress unfold rationals_to_rationals : typeclass_instances.
 
   Local Existing Instance to_frac_bijective.
   Global Instance: SemiRing_Morphism (rationals_to_rationals Q1 Q2) := _.
@@ -142,7 +146,7 @@ Section isomorphic_image_is_rationals.
   Context (f : Q → F) `{!Inverse f} `{!Bijective f} `{!SemiRing_Morphism f}.
 
   Instance iso_to_frac: RationalsToFrac F := λ Z _ _ _ _ _ _ _ _, rationals_to_frac Q Z ∘ f⁻¹.
-  Hint Unfold iso_to_frac: typeclass_instances.
+  Hint Extern 4 => progress unfold iso_to_frac : typeclass_instances.
 
   Instance: Bijective (f⁻¹) := _.
   Instance: SemiRing_Morphism (f⁻¹) := {}.
