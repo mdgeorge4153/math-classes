@@ -59,6 +59,29 @@ Section relation_from_cone.
 
 End relation_from_cone.
 
+(** We can use < to define ≤ and vice-versa ***********************************)
+Section strict_cone_from_weak.
+
+  Context `{Group A} `{!SemiGroupCone cone} `{!TotalCone cone}.
+
+  Instance flip_group `{!GroupCone cone} : GroupCone (flipped_cone cone).
+  Proof.  repeat (split; try apply _).
+    unfold flipped_cone. rewrite H0; auto.
+    unfold flipped_cone. rewrite H0; auto.
+    unfold flipped_cone. unfold not. intros.
+      destruct (tcone_total x) as [pos | [ neg | zer ]].
+        apply H1. setoid_replace (-y) with (-(x & y) & x) by group. apply sgcone_sgop; assumption.
+        apply H0; assumption.
+        rewrite zer in H2. apply H1. setoid_replace (-y) with (- (mon_unit & y)) by group; assumption.
+    unfold flipped_cone. intro x. setoid_replace (- - x) with x by group. unfold not. intros.
+        destruct (tcone_total (x)) as [pos | [ neg | zer ]].
+            contradiction.
+            contradiction.
+            easy.
+  Qed.
+
+End strict_cone_from_weak.
+
 (*******************************************************************************
  * The relation R induced by a weak group cone C is a partial order.
  * If C is total then so is R.
