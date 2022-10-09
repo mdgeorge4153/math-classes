@@ -49,10 +49,6 @@ Require Import
   MathClasses.interfaces.abstract_algebra
   MathClasses.interfaces.orders.
 
-(** Operational typeclasses ***************************************************)
-Class IsNonNeg A := is_nonneg : A -> Prop.
-Class IsPos    A := is_pos    : A -> Prop.
-
 Section PositivityAndOrders.
 
 Context `{Group A}.
@@ -65,13 +61,6 @@ Definition relation_cone (compare : relation A) : A -> Prop :=
 
 Definition flipped_cone (cone_contains : A -> Prop) : A -> Prop :=
   λ x, ¬ cone_contains (-x).
-
-Instance cone_rel_is_le   `{IsNonNeg A} : Le A := cone_relation is_nonneg.
-Instance cone_rel_is_lt   `{IsPos    A} : Lt A := cone_relation is_pos.
-Instance pos_from_nonneg  `{IsNonNeg A} : IsPos A := flipped_cone is_nonneg.
-Instance nonneg_from_pos  `{IsPos    A} : IsNonNeg A := flipped_cone is_pos.
-Instance rel_cone_is_nneg `{Le A} : IsNonNeg A := relation_cone le.
-Instance rel_cone_is_pos  `{Lt A} : IsPos A    := relation_cone lt.
 
 End PositivityAndOrders.
 
@@ -139,17 +128,35 @@ Class StrictCone (cone_contains : A -> Prop) :=
   ; scone_strict : ¬ cone_contains mon_unit
   }.
 
+Instance strict_cone_is_lt `{!StrictCone cone} : Lt A := cone_relation cone.
+
 (* weak cones yield weak partial orders (e.g. ≤) *)
 Class WeakCone (cone_contains : A -> Prop) :=
   { wcone_cone :> GroupCone cone_contains
   ; wcone_weak :  cone_contains mon_unit
   }.
 
+Instance weak_cone_is_le `{!WeakCone cone} : Le A := cone_relation cone.
+
 (* total cones yield total orders *)
 Class TotalCone (cone_contains : A -> Prop) :=
-  { tcone_cone  :> GroupCone cone_contains
+  { tcone_cone  :> StrictCone cone_contains
   ; tcone_total :  ∀ x : A, cone_contains x \/ cone_contains (- x) \/ x = mon_unit
   }.
+
+Inductive Sign `{!GroupCone cone_contains} (x : A) : Prop :=
+    | positive : cone_contains x     -> Sign x
+    | negative : cone_contains (- x) -> Sign x
+    | zero     : x = mon_unit        -> Sign x
+.
+
+Program Definition sign `{!TotalCone cone} (x : A) : Sign x :=
+    match tcone_total x with
+      | or_introl _ => positive _ _
+      | or_intror (or_introl _) => negative _ _
+      | or_intror (or_intror _) => zero _ _
+    end
+.
 
 End ConeProperties.
 

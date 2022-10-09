@@ -144,7 +144,7 @@ Section lt_from_pos.
   Context `{∀ x y, Decision (x = y)}.
   Global Instance: PseudoOrder (<).
   Proof. split. apply dec_strong_setoid.
-    intros x y lts; unfold lt, cone_rel_is_lt, cone_relation in *;
+    intros x y lts. unfold lt, cone_relation in *;
       apply scone_strict; setoid_replace mon_unit with ((y & -x) & (x & -y)) by group. apply sgcone_sgop; easy.
     apply _.
     split.
@@ -185,11 +185,13 @@ Section ring_order_from_rcone.
   Local Existing Instance plus_is_sg_op | 0.
   Context `{Ring A} `{!WeakCone cone} `{!RingCone cone}.
 
+  (*
   Local Instance: IsNonNeg A := cone.
-  Local Existing Instance cone_rel_is_le | 0.
+  *)
+  Local Instance : Le A := cone_relation cone.
   
   Lemma weak_plus_spec: ∀ z, OrderPreserving (z +).
-  Proof. repeat (split; try apply _); intros; apply cone_rel_compat_left; easy. Qed.
+  Proof. repeat (split; try apply _); intros. apply cone_rel_compat_left. easy. Qed.
 
   Global Instance: SemiRingOrder (≤).
   Proof. apply from_ring_order. apply weak_plus_spec. apply mult_spec. Qed.
@@ -201,11 +203,10 @@ Section strict_ring_order_from_rcone.
   Context `{Ring A} `{!StrictCone cone} `{!RingCone cone}.
   Add Ring R : (stdlib_ring_theory A).
 
-  Local Instance: IsPos A := cone.
-  Local Existing Instance cone_rel_is_lt | 0.
+  Local Existing Instance strict_cone_is_lt | 0.
 
   Local Lemma strict_plus_spec : ∀ z, StrictlyOrderPreserving (z +).
-  Proof. repeat (split; try apply _); intros; apply cone_rel_compat_left; easy. Qed.
+  Proof. repeat (split; try apply _); intros;  apply cone_rel_compat_left; easy. Qed.
 
   Lemma from_strict_ring_order: StrictSemiRingOrder (<).
   Proof. apply from_strict_ring_order. apply strict_plus_spec. apply mult_spec. Qed.
