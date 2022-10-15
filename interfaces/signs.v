@@ -34,20 +34,13 @@ Class PositiveSemiGroup :=
     ; psg_flip   :  ∀ x y : A, positive (x & y) -> positive (y & x)
     }.
 
-Context `{MonUnit A}.
-
-Class PositiveMonoid :=
-    { pm_monoid   :> Monoid A
-    ; pm_signedsg :> PositiveSemiGroup
-    ; pm_unit     :  ¬ positive mon_unit
-    }.
-
-Context `{Negate A}.
+Context `{MonUnit A} `{Negate A}.
 
 Class PositiveGroup :=
-    { pg_signedsg :> PositiveMonoid
-    ; pg_group    :> Group A
-    ; pg_flip     :  ∀ x : A, positive x -> positive (-x) -> False
+    { pg_pg    :> PositiveSemiGroup
+    ; pg_group :> Group A
+    ; pg_flip  :  ∀ x : A, positive x -> positive (-x) -> False
+    ; pg_unit  :  ¬ positive mon_unit
     }.
 
 End Groups.

@@ -1,7 +1,8 @@
 Require Import 
   Coq.setoid_ring.Ring MathClasses.interfaces.abstract_algebra 
   MathClasses.theory.rings MathClasses.theory.dec_fields
-  MathClasses.interfaces.cones MathClasses.orders.rings.
+  MathClasses.interfaces.cones MathClasses.orders.rings
+  MathClasses.misc.group_automation.
 
 Inductive Frac R `{Rap : Equiv R} `{Rzero : Zero R} : Type := frac { num: R; den: R; den_ne_0: den ≠ 0 }.
   (* We used to have [den] and [den_nonzero] bundled, which did work relatively nicely with Program, but the
@@ -192,23 +193,18 @@ Proof.
 Qed.
 End morphisms.
 
-(*
+(*******************************************************************************
+ * The field of fractions of an ordered ring is ordered
+ *)
+
 Section cones.
 
-Context `{IntegralDomain R} `{∀ x y, Decision (x = y)}.
-Context `{!RingCone cone_contains} `{!TotalCone cone_contains}.
-Context `{∀ x : R, Decide (cone_contains x)}.
-
-Definition normalize (x : Frac R) : Frac R :=
-    if decide (cone_contains (den x)) then x else frac (- num x) (- den x).
-
-Global Instance Frac_ispos : IsPos (Frac R) | 0. :=
-  λ x, (cone_contains (num x) /\ cone_contains (den x)) \/ (cone_contains (- num x
+Context `{Ring R}.
+Context `{!IntegralDomain R} `{!∀ x y, Decision (x = y)}.
+Context `{!RingCone pos} `{!TotalCone pos}.
+Context `{!∀ x : R, Decision (pos x)}.
 
 Add Ring RO : (stdlib_ring_theory R).
-
-Global Instance Frac_le: Le (Frac R) | 0 :=
-  λ x y, num x * abs (den y) ≤ num y * abs (den x).
 
 Lemma neg_ne_0: ∀ x : R, x = 0 -> - x = 0.
 Proof. intros. intros. rewrite H2. ring_simplify. auto. Qed.
@@ -216,43 +212,48 @@ Proof. intros. intros. rewrite H2. ring_simplify. auto. Qed.
 Lemma pos_ne_0: ∀ x : R, - x = 0 -> x = 0.
 Proof. intros. setoid_replace x with (- - x) by ring. apply neg_ne_0. auto. Qed.
 
-(*
-Program Definition normalize (n : Frac R) : {k : Frac R | 0 ≤ den k ∧ k = n} :=
-  match (decide (0 ≤ den n)) with
-  | left _ => exist _ n _
-  | right _ => exist _ (frac (- (num n)) (- (den n)) _) _
-  end.
-(* - den n ≠ 0 *)
-Next Obligation. unfold not. intros. apply (den_ne_0 n). apply pos_ne_0. auto. Qed.
-Next Obligation. split.
-  (* 0 ≤ - den n *)
-  apply le_flip. unfold not. intros. apply wildcard'. apply flip_nonneg_negate. auto.
-  (* - num n / - den n = n *)
-  unfold equiv, Frac_equiv. simpl. ring.
+Program Definition normalize (x : Frac R) : Frac R :=
+    match sign (den x) with
+        | negative _ _ => frac (- num x) (- den x) _
+        | _ => x
+    end.
+Next Obligation. apply _. Qed.
+Next Obligation. apply _. Qed.
+Next Obligation. apply abgroup_group. apply ring_group.
+Next Obligation. unfold not. intros. apply (den_ne_0 x). apply pos_ne_0. easy. Defined.
+
+Lemma normalize_correct : ∀ x : Frac R, normalize x = x.
+Proof. intro x. unfold normalize. destruct (sign (den x)).
+  easy.
+  unfold equiv. unfold Frac_equiv. simpl. ring.
+  easy.
   Qed.
 
-Lemma normalize_le : ∀ x y, x ≤ y <-> ` (normalize x) ≤ y.
-Proof. split. rewrite (proj2 (proj2_sig (normalize x))).
-*)
+Lemma normalize_pos_den : ∀ x : Frac R, pos (den (normalize x)).
+Proof.
+    unfold normalize. intro x. destruct (sign (den x)).
+        easy.
+        easy.
+        contradiction (den_ne_0 x).
+Qed.
 
-Instance: Proper ((=) ==> (=) ==> iff) Frac_le.
-split. unfold Frac_le.  unfold equiv, Frac_equiv in H2. intros. split. intros.
-destruct (total (≤) 0 (den y)).
-destruct (total (≤) 0 (den y0)). apply nonneg_mult_compat; auto.
-destruct (total (≤) 0 (den x)).
-destruct (total (≤) 0 (den x0)).
-destruct (total  
-destruct (decide (0 
+Definition frac_pos (x : Frac R) : Prop :=
+    pos (num (normalize x)).
 
-destruct (decide (0 ≤ den x)). destruct (decide (0 ≤ den y)).
-intros. split. intros. destruct H4.
+Instance: Proper ((=) ==> (=)) normalize.
+Proof. intros x1 x2 e; repeat rewrite normalize_correct; easy. Qed.
 
-unfold equiv in H1. unfold Frac_equiv in H1.
-assert (num x = num y). simpl. unfold equiv, Frac_equiv in H1.
-split. intros.
+Lemma helper: ∀ x, pos (- x) -> ¬ pos x.
+Proof. unfold not. intros. apply scone_strict. setoid_replace 0 with x. easy. apply gcone_both.
 
-Global Instance: SemiRingOrder Frac_le.
-split. split. apply _. unfold le.
+Instance: Proper ((=) ==> iff) frac_pos.
+Proof. intros x1 x2 e. unfold frac_pos.  unfold normalize.
+    destruct (sign (den x1)); destruct (sign (den x2)); simpl.
+    destruct (sign (num x1)); destruct (sign (num x2)).
+        easy.
 
-End orders.
-*)
+    easy.
+  unfold equiv, Frac_equiv in e. split. intros. destruct (decide (pos (num x2))). easy.
+
+
+
