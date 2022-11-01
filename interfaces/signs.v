@@ -25,9 +25,9 @@ Instance sign_is_negativity `{Signed A} : Negative A := λ x, sign x = neg.
 (** Semigroup positivity ******************************************************)
 Section Groups.
 
-Context `{Equiv A} `{SgOp A} `{Positive A}.
+Context `{Equiv A} `{SgOp A}.
 
-Class PositiveSemiGroup :=
+Class PositiveSemiGroup `{Positive A} :=
     { psg_sg     :> SemiGroup A
     ; psg_proper :> Proper ((=) ==> iff) positive
     ; psg_sgop   :  ∀ x y : A, positive x -> positive y -> positive (x & y)
@@ -36,11 +36,18 @@ Class PositiveSemiGroup :=
 
 Context `{MonUnit A} `{Negate A}.
 
-Class PositiveGroup :=
+Class PositiveGroup `{Positive A} :=
     { pg_pg    :> PositiveSemiGroup
     ; pg_group :> Group A
     ; pg_flip  :  ∀ x : A, positive x -> positive (-x) -> False
     ; pg_unit  :  ¬ positive mon_unit
+    }.
+
+Class SignedGroup `{Signed A} :=
+    { signedg_pg     :> PositiveGroup
+    ; signedg_proper :> Proper ((=) ==> (=)) sign
+    ; signedg_flip   :  ∀ x : A, sign (-x) = flip (sign x)
+    ; signedg_zero   :  ∀ x : A, sign x = zer -> x = mon_unit
     }.
 
 End Groups.
@@ -52,7 +59,7 @@ Context `{Signed A}.
 
 Class SignedRing :=
     { signedr_r         :> Ring A
-    ; signedr_signedg   :> @PositiveGroup     _ _ plus_is_sg_op _ _ _
+    ; signedr_signedg   :> PositiveGroup
     ; signedsr_mult_pos :> @PositiveSemiGroup _ _ mult_is_sg_op _
     }.
 
