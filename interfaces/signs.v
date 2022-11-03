@@ -3,9 +3,6 @@ Require Import
 
 (** Operational typeclasses ***************************************************)
 
-Class Positive A := positive : A -> Prop.
-Class Negative A := negative : A -> Prop.
-
 Inductive Sign := pos | neg | zer.
 Class Signed A := sign : A -> Sign.
 
@@ -16,16 +13,23 @@ Definition flip (s : Sign) : Sign := match s with
     | pos => neg | neg => pos | zer => zer
 end.
 
-#[global]
-Instance sign_is_positivity `{Signed A} : Positive A := λ x, sign x = pos.
-
-#[global]
-Instance sign_is_negativity `{Signed A} : Negative A := λ x, sign x = neg.
-
 (** Semigroup positivity ******************************************************)
 Section Groups.
 
-Context `{Equiv A} `{SgOp A}.
+Context `{Equiv A} `{SgOp A} `{MonUnit A} `{Negate A} `{Signed A}.
+
+Class SignedGroup :=
+    { signedgroup_group    :> Group A
+    ; signedgroup_sgop     :  ∀ x y, sign x = pos -> sign y = pos -> sign (x & y) = pos
+    ; signedgroup_proper   :> Proper ((=) ==> (=)) sign
+    ; signedgroup_swap     :  ∀ x y, sign (x & y) = sign (y & x)
+    ; signedgroup_unit     :  sign mon_unit = zer
+    ; signedgroup_negate   :  ∀ x, sign (-x) = flip (sign x)
+    }.
+
+End Groups.
+
+(*
 
 Class PositiveSemiGroup `{Positive A} :=
     { psg_sg     :> SemiGroup A
@@ -73,3 +77,4 @@ Class SignedField :=
 
 End Rings.
 
+*)
