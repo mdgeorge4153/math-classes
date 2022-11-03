@@ -9,7 +9,7 @@ Class Signed A := sign : A -> Sign.
 #[global]
 Instance: Equiv Sign := (≡).
 
-Definition flip (s : Sign) : Sign := match s with
+Instance sign_flip: Negate Sign := λ s, match s with
     | pos => neg | neg => pos | zer => zer
 end.
 
@@ -24,7 +24,7 @@ Class SignedGroup :=
     ; signedgroup_proper   :> Proper ((=) ==> (=)) sign
     ; signedgroup_swap     :  ∀ x y, sign (x & y) = sign (y & x)
     ; signedgroup_unit     :  sign mon_unit = zer
-    ; signedgroup_negate   :  ∀ x, sign (-x) = flip (sign x)
+    ; signedgroup_negate   :  ∀ x, sign (-x) = - (sign x)
     }.
 
 End Groups.

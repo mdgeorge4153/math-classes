@@ -100,7 +100,7 @@ Proof. repeat (split; try apply _);
 Instance: TotalRelation le_from_sign.
 Proof. intros x y. unfold le_from_sign.
     setoid_replace (y & -x) with (-(x & -y)) by group;
-    rewrite signedgroup_negate. unfold flip. destruct (sign (x & -y)); auto. Qed.
+    rewrite signedgroup_negate; unfold negate, sign_flip; fold negate; destruct (sign (x & -y)); auto. Qed.
 
 End relation_from_signed.
 (* 
