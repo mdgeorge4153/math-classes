@@ -6,75 +6,58 @@ Require Import
 Inductive Sign := pos | neg | zer.
 Class Signed A := sign : A -> Sign.
 
-#[global]
-Instance: Equiv Sign := (≡).
+(** Signs form a commutative monoid *******************************************)
 
-Instance sign_flip: Negate Sign := λ s, match s with
-    | pos => neg | neg => pos | zer => zer
-end.
+Global Instance: Equiv Sign := (≡).
 
-(** Semigroup positivity ******************************************************)
-Section Groups.
+Global Instance sign_flip:
+    Negate Sign := λ s, match s with | pos => neg | neg => pos | zer => zer end.
 
-Context `{Equiv A} `{SgOp A} `{MonUnit A} `{Negate A} `{Signed A}.
+Global Instance sign_mult:
+    Mult Sign := λ s1 s2, match s1 with | pos => s2 | neg => -s2 | zer => zer end.
 
-Class SignedGroup :=
+Global Instance: Zero Sign := zer.
+Global Instance: One Sign := pos.
+
+Local Existing Instance one_is_mon_unit | 0.
+Local Existing Instance mult_is_sg_op | 0.
+
+Global Instance: CommutativeMonoid Sign.
+Proof. repeat (split; try apply _).
+    intros x y z; destruct x,y,z; easy.
+    intros x; destruct x; easy.
+    intros x y; destruct x, y; easy.
+    Qed.
+
+(** Signed groups and rings ***************************************************)
+
+Section signed_structures.
+
+Context `{Equiv A} `{Signed A} `{Negate A}.
+
+Class SignedGroup `{SgOp A} `{MonUnit A} :=
     { signedgroup_group    :> Group A
     ; signedgroup_sgop     :  ∀ x y, sign x = pos -> sign y = pos -> sign (x & y) = pos
     ; signedgroup_proper   :> Proper ((=) ==> (=)) sign
     ; signedgroup_swap     :  ∀ x y, sign (x & y) = sign (y & x)
-    ; signedgroup_unit     :  sign mon_unit = zer
+    ; signedgroup_unit     :  sign mon_unit = 0
     ; signedgroup_negate   :  ∀ x, sign (-x) = - (sign x)
     }.
 
-End Groups.
-
-(*
-
-Class PositiveSemiGroup `{Positive A} :=
-    { psg_sg     :> SemiGroup A
-    ; psg_proper :> Proper ((=) ==> iff) positive
-    ; psg_sgop   :  ∀ x y : A, positive x -> positive y -> positive (x & y)
-    ; psg_flip   :  ∀ x y : A, positive (x & y) -> positive (y & x)
-    }.
-
-Context `{MonUnit A} `{Negate A}.
-
-Class PositiveGroup `{Positive A} :=
-    { pg_pg    :> PositiveSemiGroup
-    ; pg_group :> Group A
-    ; pg_flip  :  ∀ x : A, positive x -> positive (-x) -> False
-    ; pg_unit  :  ¬ positive mon_unit
-    }.
-
-Class SignedGroup `{Signed A} :=
-    { signedg_pg     :> PositiveGroup
-    ; signedg_proper :> Proper ((=) ==> (=)) sign
-    ; signedg_flip   :  ∀ x : A, sign (-x) = flip (sign x)
-    ; signedg_zero   :  ∀ x : A, sign x = zer -> x = mon_unit
-    }.
-
-End Groups.
-
-Section Rings.
-
-Context `{Equiv A} `{Plus A} `{Mult A} `{Zero A} `{One A} `{Negate A}.
-Context `{Signed A}.
+Context `{Plus A} `{Mult A} `{Zero A} `{One A}.
 
 Class SignedRing :=
-    { signedr_r         :> Ring A
-    ; signedr_signedg   :> PositiveGroup
-    ; signedsr_mult_pos :> @PositiveSemiGroup _ _ mult_is_sg_op _
+    { signedring_ring     :> Ring A
+    ; signedring_sgroup   :> @SignedGroup plus_is_sg_op zero_is_mon_unit
+    ; signedring_morphism :> @Monoid_Morphism _ _ _ _ one_is_mon_unit _ mult_is_sg_op _ sign
     }.
 
 Context `{DecRecip A}.
 
 Class SignedField :=
-    { signedf_f       :> DecField A
-    ; signedf_signedr :> SignedRing
-    ; signedf_recip   :  ∀ x : A, sign (/ x) = sign x
+    { signedfield_field :> DecField A
+    ; signedfield_recip :  ∀ x, sign (/x) = sign x
     }.
 
-End Rings.
+End signed_structures.
 
-*)

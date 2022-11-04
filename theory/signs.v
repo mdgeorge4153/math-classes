@@ -7,37 +7,6 @@ Require Import
     MathClasses.theory.rings Coq.setoid_ring.Ring
     MathClasses.misc.group_automation.
 
-(*
-Section relation_from_positivity.
-
-Context `{PositiveGroup A}.
-
-#[global]
-Instance positivity_is_lt : Lt A := λ x y, positive (y & (-x)).
-
-#[global]
-Instance: Transitive (<).
-Proof. unfold lt, positivity_is_lt; intros x y z;
-    setoid_replace (z & -x) with ((z & -y) & (y & -x)) by group;
-    intros; apply psg_sgop; easy.
-Qed.
-
-#[global]
-Instance: AntiSymmetric (<).
-Proof. unfold lt, positivity_is_lt; intros x y;
-    setoid_replace (x & -y) with (- (y & -x)) by group;
-    intros; exfalso; apply (pg_flip (y & -x)); easy.
-Qed.
-
-#[global]
-Instance: Irreflexive (<).
-Proof. repeat red; unfold lt, positivity_is_lt; intros x;
-    setoid_replace (x & -x) with mon_unit by group; apply pg_unit.
-Qed.
-
-End relation_from_positivity.
-*)
-
 Section definitions.
 
 Context `{Equiv A} `{Signed A} `{SgOp A} `{Negate A}.
@@ -65,7 +34,7 @@ Proof. intros x1 x2 xeq y1 y2 yeq;
 
 Instance: Irreflexive (<).
 Proof. repeat red; intro x;
-    unfold lt, lt_from_sign; group_simplify; rewrite signedgroup_unit; easy. Qed.
+    unfold lt, lt_from_sign; group_simplify. rewrite signedgroup_unit; easy. Qed.
 
 Instance: Transitive lt_from_sign.
 Proof. intros x y z xlty yltz;
@@ -103,50 +72,33 @@ Proof. intros x y. unfold le_from_sign.
     rewrite signedgroup_negate; unfold negate, sign_flip; fold negate; destruct (sign (x & -y)); auto. Qed.
 
 End relation_from_signed.
-(* 
-#[global]
-Instance: Trichotomy (<).
-Proof. repeat red; unfold lt, positivity_is_lt, positive, sign_is_positivity;
-    intros x y.
-    setoid_replace (x & -y) with (- (y & -x)) by group.
-    destruct (sign (y & -x)) eqn:sign; rewrite signedg_flip; rewrite sign; simpl;
-    match goal with
-        | [ |- context[?x = ?x] ] => auto
-        | [ _ : ?e ≡ zer |- context[x = y] ] => enough (x = y) by auto; apply signedg_zero in sign; symmetry; group
-    end.
-Qed.
 
-#[global]
-Instance: Proper ((=) ==> (=) ==> iff) (<).
-Proof. repeat red; intros x1 y1 eq1 x2 y2 eq2;
-    unfold lt, positivity_is_lt, positive, sign_is_positivity;
-    rewrite eq1, eq2; easy.
-    Qed.
+Section ring_relation.
 
-#[global]
-Instance: StrictSetoidOrder (<).
-Proof. repeat (split; try apply _). Qed.
+Context `{SignedRing R}.
 
-#[global]
-Instance: @CoTransitive A lt. (* TODO: without A, it is defaulting to nat *)
-Proof. repeat red. intros. destruct (trichotomy (<) x z) as [lt | [ eq | gt ]].
-    left; assumption.
-    right; rewrite <- eq; assumption.
-    right; transitivity x; assumption.
-    Qed.
+Lemma nontrivial: 1 ≠ 0.
+Proof. intros eq.
+    assert (sign 1 = sign 0) as nonsense by (rewrite eq; easy).
+    rewrite signedgroup_unit in nonsense.
+    rewrite preserves_mon_unit in nonsense.
+    easy. Qed.
+
+Lemma not_zerodivisor: ∀ x y, sign (x * y) = 0 → sign x = 0 ∨ sign y = 0.
+Proof. intros x y. rewrite preserves_sg_op.
+    destruct (sign x), (sign y); auto; easy. Qed.
 
 (*
-Context `{∀ x y, Decision (x = y)}.
+Instance: NoZeroDivisors R.
+Proof. intros x xzd. destruct xzd as [nonzero [y [ynonzero xyzero]]].
+    destruct (sign x) eqn:sx, (sign y) eqn:sy.
+    assert (sign (x * y) = 0). rewrite xyzero. apply signedgroup_unit.
 
-#[global]
-Instance: PseudoOrder (<).
-Proof. split.
-    apply dec_strong_setoid.
-    unfold lt, positivity_is_lt; intros x y lts; unfold lt, positivity_is_lt;
-        apply (pg_flip (y & -x)); try setoid_replace (- (y & -x)) with (x & -y) by group; easy.
-    apply _.
-    split. intro apart.
+Instance: IntegralDomain R.
+Proof. repeat (split; try apply _).
+    apply nontrivial.
+    unfold NoZeroDivisors, ZeroDivisor.
+*)
 
-*)
-End relation_from_signed.
-*)
+End ring_relation.
+
